@@ -32,4 +32,4 @@ jobs:
 
       - name: Build
         run: |
-          GOOS=linux GPARCH=amd64 go build -o ${{ env.CI_BIN }}
+          GOOS=linux GPARCH=amd64 go build

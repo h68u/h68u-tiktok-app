@@ -1,14 +1,14 @@
 package pong
 
 import (
-	"gin_template/server"
+	"gin_template/hub"
 	"github.com/gin-gonic/gin"
 	"sync"
 )
 
 func init() {
 	instance = &pong{}
-	server.RegisterModule(instance)
+	hub.RegisterModule(instance)
 }
 
 var instance *pong
@@ -16,8 +16,8 @@ var instance *pong
 type pong struct {
 }
 
-func (m *pong) GetModuleInfo() server.ModuleInfo {
-	return server.ModuleInfo{
+func (m *pong) GetModuleInfo() hub.ModuleInfo {
+	return hub.ModuleInfo{
 		ID:       "internal.pong",
 		Instance: instance,
 	}
@@ -35,12 +35,12 @@ func (m *pong) PostInit() {
 	// 如通用数据库等等
 }
 
-func (m *pong) Serve(server *server.Server) {
+func (m *pong) Serve(server *hub.Server) {
 	// 注册服务函数部分
 	server.HttpEngine.GET("/ping", handlePingPong)
 }
 
-func (m *pong) Start(server *server.Server) {
+func (m *pong) Start(server *hub.Server) {
 	// 此函数会新开携程进行调用
 	// ```go
 	// 		go exampleModule.Start()
@@ -50,7 +50,7 @@ func (m *pong) Start(server *server.Server) {
 	// 如http服务器等等
 }
 
-func (m *pong) Stop(server *server.Server, wg *sync.WaitGroup) {
+func (m *pong) Stop(server *hub.Server, wg *sync.WaitGroup) {
 	// 别忘了解锁
 	defer wg.Done()
 	// 结束部分

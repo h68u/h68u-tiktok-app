@@ -1,8 +1,8 @@
 package main
 
 import (
+	"gin_template/hub"
 	_ "gin_template/module/pong"
-	"gin_template/server"
 	"gin_template/utils"
 	"os"
 	"os/signal"
@@ -13,14 +13,14 @@ func init() {
 }
 
 func main() {
-	server.Init()
+	hub.Init()
 
-	server.StartService()
+	hub.StartService()
 
-	server.Run()
+	hub.Run()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
-	server.Stop()
+	hub.Stop()
 }

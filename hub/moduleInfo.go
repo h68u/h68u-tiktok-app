@@ -1,4 +1,4 @@
-package server
+package hub
 
 // ModuleInfo 模块信息
 type ModuleInfo struct {

@@ -5,5 +5,7 @@ hdu-team tiktok-summer
 [operation]target_file_name(or module/package name):<space>operation_description
 
 [update]/[remove]/[fix]/[feature]
+  
+  > eg feat README.md: create README.md
 
   建立自己的分支: `your_nickname-dev`

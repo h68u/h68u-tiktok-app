@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"gin_template/common/constant"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -21,6 +22,7 @@ func Init() {
 	Instance = &Server{
 		HttpEngine: httpEngine,
 	}
+	InitDatabase()
 }
 
 // StartService 启动服务
@@ -44,7 +46,7 @@ func StartService() {
 func Run() {
 	go func() {
 		logger.Info("http engine starting...")
-		if err := Instance.HttpEngine.Run("127.0.0.1:9955"); err != nil {
+		if err := Instance.HttpEngine.Run(constant.ServerPort); err != nil {
 			logger.Fatal(err)
 		} else {
 			logger.Info("http engine running...")

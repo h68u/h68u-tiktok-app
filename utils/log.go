@@ -1,12 +1,11 @@
 package utils
 
 import (
-	"path"
-	"time"
-
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"path"
+	"time"
 )
 
 // GetModuleLogger - 提供一个为 Module 使用的 logrus.Entry

@@ -3,6 +3,8 @@ package main
 import "github.com/gin-gonic/gin"
 
 func handle(r *gin.Engine) {
+	// TODO: 或许可以在这加一个全局处理 err 的 handler
+	// r.Any("/", ctrl.ErrorHanler)
 
 	basic := r.Group("/douyin")
 

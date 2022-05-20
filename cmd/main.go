@@ -1,8 +1,8 @@
 package main
 
 import (
-
 	"github.com/gin-gonic/gin"
+	"tikapp/util"
 )
 
 func main() {
@@ -10,7 +10,5 @@ func main() {
 
 	handle(r)
 
-	r.Run(":8080")
+	r.Run(util.GetServerLoc())
 }
-	
-

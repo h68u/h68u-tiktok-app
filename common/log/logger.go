@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type ZapLevel int
+//type ZapLevel int
 
 // Logger 整个项目的Logger
 var Logger *zap.Logger
@@ -108,7 +108,6 @@ func getEncoderConfig() (config zapcore.EncoderConfig) {
 		EncodeDuration: zapcore.SecondsDurationEncoder, // 执行消耗时间转化成浮点型的秒
 		EncodeCaller:   zapcore.ShortCallerEncoder,     // 以包/文件:行号 格式化调用堆栈
 	}
-	config.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	return config
 }
 

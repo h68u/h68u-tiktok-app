@@ -31,5 +31,6 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build
+        working-directory: cmd
         run: |
           GOOS=linux GPARCH=amd64 go build

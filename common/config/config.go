@@ -14,14 +14,13 @@ type config struct {
 
 var conf *config
 
-func init() {
+func ReadCfg() {
 	conf = &config{
 		viper.New(),
 	}
 	conf.SetConfigName("app")
 	conf.SetConfigType("yaml")
 	conf.AddConfigPath(".")
-	conf.AddConfigPath("./set")
 	err := conf.ReadInConfig()
 	if err != nil {
 		logrus.WithField("config", "conf").WithError(err).Panicf("unable to read global config")

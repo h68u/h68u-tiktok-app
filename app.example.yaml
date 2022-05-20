@@ -8,7 +8,7 @@ mysql:
     password: root
     addr: localhost
     port: 3306
-    dbname: h68u-tiktok-app
+    dbname: tiktok
 
 redis:
   database: 

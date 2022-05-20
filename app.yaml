@@ -1,0 +1,10 @@
+
+server:
+  port: :80
+
+mysql:
+  datasource:
+    username: root
+    password: root
+    addr: localhost:3306
+    dbname: h68u-tiktok-app

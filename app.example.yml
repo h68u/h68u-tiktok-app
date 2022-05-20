@@ -1,3 +1,4 @@
+
 server:
   port: :80
 
@@ -7,3 +8,6 @@ mysql:
     password: root
     addr: localhost:3306
     dbname: h68u-tiktok-app
+
+log:
+  level: debug

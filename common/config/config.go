@@ -6,22 +6,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Config struct {
+type config struct {
 	*viper.Viper
 }
 
-var Conf *Config
+var conf *config
 
 func init() {
-	Conf = &Config{
+	conf = &config{
 		viper.New(),
 	}
-	Conf.SetConfigName("application")
-	Conf.SetConfigType("yaml")
-	Conf.AddConfigPath(".")
-	err := Conf.ReadInConfig()
+	conf.SetConfigName("app")
+	conf.SetConfigType("yaml")
+	conf.AddConfigPath(".")
+	err := conf.ReadInConfig()
 	if err != nil {
-
+		panic(err)
 	}
-	Conf.WatchConfig()
+	conf.WatchConfig()
 }

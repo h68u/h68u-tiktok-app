@@ -86,7 +86,7 @@ func getLogWriter(fileName string) zapcore.WriteSyncer {
 }
 
 func getEncoderCore(fileName string, level zapcore.LevelEnabler) (core zapcore.Core) {
-	writer := getLogWriter(fileName) // 使用file-rotatelogs进行日志分割
+	writer := getLogWriter(fileName)
 	return zapcore.NewCore(getEncoder(), writer, level)
 }
 

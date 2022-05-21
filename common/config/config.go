@@ -2,9 +2,7 @@ package config
 
 import (
 	"github.com/fsnotify/fsnotify"
-	_ "github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
-	_ "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 

@@ -19,4 +19,6 @@
 
 app.yaml
 
-logs
+logs/
+
+test/

@@ -22,7 +22,7 @@ func handle(r *gin.Engine) {
 		userGroup.POST("/register", )
 
 		// 用户登录
-		userGroup.POST("/register", )
+		// userGroup.POST("/register", )
 	}
 
 	// 视频投稿相关

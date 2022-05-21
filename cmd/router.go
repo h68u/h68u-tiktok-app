@@ -1,10 +1,14 @@
 package main
 
 import "github.com/gin-gonic/gin"
+import "tikapp/controller"
 
 func handle(r *gin.Engine) {
 	// TODO: 或许可以在这加一个全局处理 err 的 handler
 	// r.Any("/", ctrl.ErrorHanler)
+
+	// 测试
+	r.Any("/ping", ctrl.Ping)
 
 	basic := r.Group("/douyin")
 

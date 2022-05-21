@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"tikapp/common/config"
-	"tikapp/common/model"
 )
 
 type Model struct {
@@ -42,13 +41,7 @@ func Init() (err error) {
 	db.SetMaxOpenConns(config.MysqlCfg.MaxOpen)        // 设置最大连接数
 	db.SetConnMaxLifetime(config.MysqlCfg.MaxLifetime) // 设置连接最大存活时间
 
-	//自动建表
-	AutoCreateTable()
 	return nil
-}
-
-func AutoCreateTable() {
-	_ = DB.AutoMigrate(&model.User{})
 }
 
 func CreateDSN(dbInfo struct {

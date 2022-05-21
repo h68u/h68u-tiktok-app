@@ -12,8 +12,5 @@ mysql -u root -p
 2. CREATE DB
 ```
 CREATE DATABASE tiktok;
-CREATE USER 'TikTokAdmin'@'%' IDENTIFIED BY 'your password';
-GRANT ALL PRIVILEGES ON tiktok.* TO 'TikTokAdmin'@'%';
-FLUSH PRIVILEGES;
-exit;
+USE tiktok;
 ```

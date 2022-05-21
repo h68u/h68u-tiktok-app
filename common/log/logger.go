@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
@@ -49,12 +48,12 @@ func Init() {
 	})
 
 	cores := [...]zapcore.Core{
-		getEncoderCore(fmt.Sprintf("./debug.log"), debugPriority),
-		getEncoderCore(fmt.Sprintf("./info.log"), infoPriority),
-		getEncoderCore(fmt.Sprintf("./warn.log"), warnPriority),
-		getEncoderCore(fmt.Sprintf("./error.log"), errorPriority),
-		getEncoderCore(fmt.Sprintf("./panic.log"), panicPriority),
-		getEncoderCore(fmt.Sprintf("./fatal.log"), fatalPriority),
+		getEncoderCore("./debug.log", debugPriority),
+		getEncoderCore("./info.log", infoPriority),
+		getEncoderCore("./warn.log", warnPriority),
+		getEncoderCore("./error.log", errorPriority),
+		getEncoderCore("./panic.log", panicPriority),
+		getEncoderCore("./fatal.log", fatalPriority),
 	}
 
 	// zap.AddCaller() 可以获取到文件名和行号
@@ -104,7 +103,7 @@ func getEncoderConfig() (config zapcore.EncoderConfig) {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder, // 将日志级别字符串转化为小写
-		EncodeTime:     CustomTimeEncoder,
+		EncodeTime:     customTimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder, // 执行消耗时间转化成浮点型的秒
 		EncodeCaller:   zapcore.ShortCallerEncoder,     // 以包/文件:行号 格式化调用堆栈
 	}
@@ -112,6 +111,6 @@ func getEncoderConfig() (config zapcore.EncoderConfig) {
 }
 
 // CustomTimeEncoder 自定义日志输出时间格式
-func CustomTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format(config.LogCfg.TimeFormat))
 }

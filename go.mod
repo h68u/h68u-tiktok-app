@@ -2,8 +2,6 @@ module tikapp
 
 go 1.18
 
-replace tikapp => ./
-
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
@@ -12,7 +10,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0
 	go.uber.org/zap v1.21.0
-	google.golang.org/appengine v1.6.7
 	gorm.io/driver/mysql v1.3.3
 	gorm.io/gorm v1.23.5
 )
@@ -46,7 +43,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect

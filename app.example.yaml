@@ -1,0 +1,33 @@
+#
+# 这是一个配置文件的示例 如果要建立自己的配置文件 可以
+# 复制这个文件并改名为 `app.yaml` 然后将你创建的配置文件放到
+# 项目的根目录 注意 你的配置文件不会再 push 的时候被提交
+
+# 
+app:
+  port: 8080      # server 启动时使用的端口
+  host: localhost # host
+  jwtSecret:
+  release: false
+  runMode: debug  # gin 启动模式
+
+db:
+  mysql:
+    address: 127.0.0.1:3306
+    user: root     # 你本地 mysql 的用户名
+    password: root # 你本地的 mysql 用户密码
+    dbName: tiktok # 这里是你在 mysql 建立的数据库名称
+    maxIdle: 20
+    maxOpen: 20
+    maxLifetime: 100
+  redis:
+    host: 127.0.0.1:6379
+    password:
+    maxIdle: 20
+    maxActive: 20
+    idleTimeOut: 100
+
+log:
+  logSavePath: logs
+  logFileExt: log
+  timeFormat: 2006-01-02 - 15:04:05.000

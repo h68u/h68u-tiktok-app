@@ -20,7 +20,7 @@ func ReadCfg() {
 	}
 	conf.SetConfigName("app")
 	conf.SetConfigType("yaml")
-	conf.AddConfigPath(".")
+	conf.AddConfigPath("../")
 	err := conf.ReadInConfig()
 	if err != nil {
 		logrus.WithField("config", "conf").WithError(err).Panicf("unable to read global config")

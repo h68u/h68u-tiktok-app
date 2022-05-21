@@ -17,6 +17,7 @@
 .idea
 .vscode 
 
+app.yaml
 app.yml
 
 logs

@@ -8,8 +8,8 @@ app:
 db:
   mysql:
     address: 127.0.0.1:3306
-    user: TikTokAdmin
-    password: melody
+    user: root
+    password: root
     dbName: tiktok
     maxIdle: 20
     maxOpen: 20

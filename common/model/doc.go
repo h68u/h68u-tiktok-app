@@ -3,8 +3,6 @@
 */
 package model
 
-import "tikapp/common/db"
-
 type User struct {
 	Id            int64  `gorm:"primaryKey"`
 	Name          string `gorm:"index"`
@@ -13,8 +11,4 @@ type User struct {
 	FollowCount   int64
 	FollowerCount int64
 	IsFollow      bool
-}
-
-func AutoCreateTable() {
-	_ = db.DB.AutoMigrate(&User{})
 }

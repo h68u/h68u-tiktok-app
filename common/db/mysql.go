@@ -15,8 +15,6 @@ type Model struct {
 	gorm.Model
 }
 
-type AM []interface{}
-
 var DB *gorm.DB
 
 func Init() (err error) {
@@ -45,8 +43,12 @@ func Init() (err error) {
 	db.SetConnMaxLifetime(config.MysqlCfg.MaxLifetime) // 设置连接最大存活时间
 
 	//自动建表
-	model.AutoCreateTable()
+	AutoCreateTable()
 	return nil
+}
+
+func AutoCreateTable() {
+	_ = DB.AutoMigrate(&model.User{})
 }
 
 func CreateDSN(dbInfo struct {

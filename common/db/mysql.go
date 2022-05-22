@@ -43,7 +43,13 @@ func MySQLInit() {
 }
 
 func AutoCreateTable() {
-	_ = MySQL.AutoMigrate(&model.User{})
+	_ = MySQL.AutoMigrate(
+		&model.User{},
+		&model.Video{},
+		&model.Comment{},
+		&model.Follow{},
+		&model.VideoFavorite{},
+	)
   
 }
 

@@ -1,7 +1,9 @@
 package main
 
-import "github.com/gin-gonic/gin"
-import "tikapp/controller"
+import (
+	"github.com/gin-gonic/gin"
+	ctrl "tikapp/controller"
+)
 
 func handle(r *gin.Engine) {
 	// TODO: 或许可以在这加一个全局处理 err 的 handler
@@ -26,7 +28,7 @@ func handle(r *gin.Engine) {
 		userGroup.POST("/register")
 
 		// 用户登录
-		userGroup.POST("/login")
+		userGroup.POST("/login", ctrl.Login)
 	}
 
 	// 视频投稿相关

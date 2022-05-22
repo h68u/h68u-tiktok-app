@@ -8,16 +8,13 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"tikapp/common/config"
+	"tikapp/common/model"
 )
 
-type Model struct {
-	gorm.Model
-}
 
-var DB *gorm.DB
-
-func Init() (err error) {
-	DB, err = CreateDB(struct {
+func MySQLInit() {
+	var err error
+	MySQL, err = createDB(struct {
 		Addr string
 		User string
 		Pass string
@@ -31,20 +28,26 @@ func Init() (err error) {
 
 	if err != nil {
 		logrus.Panic("connect mysql error: ", err.Error())
-		return err
 	}
 
 	logrus.Infof("Connected mysql success")
 
-	db, _ := DB.DB()
+	db, _ := MySQL.DB()
 	db.SetMaxIdleConns(config.MysqlCfg.MaxIdle)        // 设置最大空闲连接数
 	db.SetMaxOpenConns(config.MysqlCfg.MaxOpen)        // 设置最大连接数
 	db.SetConnMaxLifetime(config.MysqlCfg.MaxLifetime) // 设置连接最大存活时间
 
-	return nil
+
+	//自动建表
+	AutoCreateTable()
 }
 
-func CreateDSN(dbInfo struct {
+func AutoCreateTable() {
+	_ = MySQL.AutoMigrate(&model.User{})
+  
+}
+
+func createDSN(dbInfo struct {
 	Addr string
 	User string
 	Pass string
@@ -55,7 +58,7 @@ func CreateDSN(dbInfo struct {
 		dbInfo.User, dbInfo.Pass, dbInfo.Addr, dbInfo.DB)
 }
 
-func CreateDB(dbInfo struct {
+func createDB(dbInfo struct {
 	Addr string
 	User string
 	Pass string
@@ -72,7 +75,7 @@ func CreateDB(dbInfo struct {
 		Pass: dbInfo.Pass,
 		DB:   dbInfo.DB,
 	}
-	DB, err := gorm.Open(mysql.Open(CreateDSN(cfg)), &gorm.Config{
+	DB, err := gorm.Open(mysql.Open(createDSN(cfg)), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // 使用单数表名
 		},

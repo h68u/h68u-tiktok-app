@@ -67,14 +67,18 @@ func pathExists(path string) bool {
 
 func getLogWriter(fileName string) zapcore.WriteSyncer {
 	dir, _ := os.Getwd() // 获取项目目录
+	sperator0 := os.PathSeparator
+	sperator := string(sperator0)
 	// 	log 存放路径
-	dir = dir + "/runtime/logs"
+	dir = dir + sperator + "runtime" + sperator + "logs"
 	if !pathExists(dir) {
-		_ = os.Mkdir(dir, os.ModePerm)
-		logrus.Warn("create dir %s failed", dir)
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			logrus.Warnf("create dir %s failed", dir)
+		}
 	}
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   dir + "/" + fileName, // 日志文件路径
+		Filename:   dir + sperator + fileName, // 日志文件路径
 		MaxSize:    5,                    // 设置日志文件最大尺寸
 		MaxBackups: 5,                    // 设置日志文件最多保存多少个备份
 		MaxAge:     30,                   // 设置日志文件最多保存多少天

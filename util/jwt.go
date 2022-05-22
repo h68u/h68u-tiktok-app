@@ -14,14 +14,29 @@ type Claims struct {
 }
 
 //GenerateToken 签发用户Token
-func GenerateToken(userId int64) (string, error) {
+func CreateAccessToken(userId int64) (string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(24 * time.Hour)
+	expireTime := nowTime.Add(2 * 60 * time.Minute)
 	claims := Claims{
 		UserId: userId,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
-			Issuer:    "to-do-list",
+			Issuer:    "tiktok-app",
+		},
+	}
+	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := tokenClaims.SignedString(jwtSecret)
+	return token, err
+}
+
+func CreateRefreshToken(userId int64) (string, error) {
+	nowTime := time.Now()
+	expireTime := nowTime.Add(30 * 24 * 60 * time.Minute)
+	claims := Claims{
+		UserId: userId,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expireTime.Unix(),
+			Issuer:    "tiktok-app",
 		},
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -40,4 +55,24 @@ func GetUsernameFormToken(token string) (int64, error) {
 		}
 	}
 	return -1, err
+}
+
+//校验token是否过期
+func ValidToken(token string) (bool, error) {
+	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if tokenClaims != nil {
+		if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
+			expiresTime := claims.ExpiresAt
+			now := time.Now().Unix()
+			if now > expiresTime {
+				//token过期了
+				return true, nil
+			} else {
+				return false, nil
+			}
+		}
+	}
+	return true, err
 }

@@ -32,7 +32,7 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	}
 	var user model.User
 	var count int64
-	err = db.DB.Debug().Model(&model.User{}).Where("username = ? and password = ?", req.Username, req.Password).Select("id").First(&user).Count(&count).Error
+	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ? and password = ?", req.Username, req.Password).Select("id").First(&user).Count(&count).Error
 	if err != nil {
 		logger.Error("mysql happen error")
 		return nil, err

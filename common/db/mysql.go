@@ -54,7 +54,7 @@ func createDSN(dbInfo struct {
 	DB   string
 }) string {
 	//user:password@/dbname?charset=utf8&parseTime=True&loc=Local
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		dbInfo.User, dbInfo.Pass, dbInfo.Addr, dbInfo.DB)
 }
 

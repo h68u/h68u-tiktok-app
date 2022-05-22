@@ -6,6 +6,7 @@ import (
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/util"
+	"time"
 )
 
 var logger = log.NameSpace("auth")
@@ -57,12 +58,15 @@ func Auth() gin.HandlerFunc {
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}
+			//刷新后，重新设置redis的key
+			db.Redis.Del(token)
 			accessToken, err1 := util.CreateAccessToken(userId)
 			if err1 != nil {
 				logger.Error("parse token error")
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}
+			db.Redis.Set(accessToken, refreshToken, 30*24*time.Hour)
 			c.Header("token", accessToken)
 			c.Next()
 			return

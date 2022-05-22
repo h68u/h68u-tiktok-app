@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/util"
@@ -17,7 +16,7 @@ func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
 		if token == "" {
-			//判断浏览器是否存在cookie，存在表示非第一次访问
+			/*//判断浏览器是否存在cookie，存在表示非第一次访问
 			logger.Info("start valid cookie")
 			_, err := c.Cookie("visit-user")
 			if err != nil {
@@ -25,12 +24,14 @@ func Auth() gin.HandlerFunc {
 				logger.Info("first visit")
 				//生成唯一id，作为游客的userId
 				u := uuid.New()
+				c.Set("userId","")
 				//TODO cookie有效期待定
 				c.SetCookie("visit-user", u.String(), 30*24*60*60*1000, "/", "localhost", false, true)
 				c.Next()
 				return
 			}
-			//有cookie,直接next
+			//有cookie,直接next*/
+			c.Set("userId", "")
 			c.Next()
 			return
 		}
@@ -46,9 +47,10 @@ func Auth() gin.HandlerFunc {
 				//refreshToken出问题，表明用户三十天未登录，需要重新登录
 				logger.Info("user need login again")
 				//直接变成访客状态
-				u := uuid.New()
+				/*u := uuid.New()
 				c.SetCookie("visit-user", u.String(), 30*24*60*60*1000, "/", "localhost", false, true)
-				c.Next()
+				c.Next()*/
+				c.Set("userId", "")
 				return
 			}
 			//根据refreshToken刷新accessToken
@@ -66,8 +68,14 @@ func Auth() gin.HandlerFunc {
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}
-			db.Redis.Set(accessToken, refreshToken, 30*24*time.Hour)
-			c.Header("token", accessToken)
+			newRefreshToken, err1 := util.CreateRefreshToken(userId)
+			if err1 != nil {
+				logger.Error("parse token error")
+				//token解析不了的情况一般很少,暂时panic一下
+				panic(err1)
+			}
+			db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour)
+			c.Set("userId", userId)
 			c.Next()
 			return
 		}

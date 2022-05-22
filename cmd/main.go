@@ -5,6 +5,7 @@ import (
 	"tikapp/common/config"
 	"tikapp/common/db"
 	"tikapp/common/log"
+	"tikapp/common/oss"
 )
 
 func init() {
@@ -12,9 +13,11 @@ func init() {
 	config.Init()
 	log.Init()
 	db.Init()
+	oss.Init()
 }
 
 func main() {
+
 	r := gin.Default()
 
 	handle(r)

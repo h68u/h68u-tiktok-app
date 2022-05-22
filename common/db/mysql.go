@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"tikapp/common/config"
+	"tikapp/common/model"
 )
 
 
@@ -36,6 +37,14 @@ func MySQLInit() {
 	db.SetMaxOpenConns(config.MysqlCfg.MaxOpen)        // 设置最大连接数
 	db.SetConnMaxLifetime(config.MysqlCfg.MaxLifetime) // 设置连接最大存活时间
 
+
+	//自动建表
+	AutoCreateTable()
+}
+
+func AutoCreateTable() {
+	_ = MySQL.AutoMigrate(&model.User{})
+  
 }
 
 func createDSN(dbInfo struct {

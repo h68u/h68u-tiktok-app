@@ -2,9 +2,7 @@ package config
 
 import (
 	"github.com/fsnotify/fsnotify"
-	_ "github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
-	_ "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -20,7 +18,7 @@ func ReadCfg() {
 	}
 	conf.SetConfigName("app")
 	conf.SetConfigType("yaml")
-	conf.AddConfigPath(".")
+	conf.AddConfigPath("../")
 	err := conf.ReadInConfig()
 	if err != nil {
 		logrus.WithField("config", "conf").WithError(err).Panicf("unable to read global config")

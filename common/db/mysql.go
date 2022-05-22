@@ -40,7 +40,6 @@ func MySQLInit() {
 
 	//自动建表
 	AutoCreateTable()
-	return nil
 }
 
 func AutoCreateTable() {

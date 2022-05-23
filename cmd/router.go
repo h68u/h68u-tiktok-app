@@ -14,6 +14,9 @@ func handle(r *gin.Engine) {
 	// 鉴权
 	r.Use(middlewire.Auth())
 
+	// 鉴权
+	r.Use(middlewire.Auth())
+
 	// 测试
 	r.Any("/ping", ctrl.Ping)
 

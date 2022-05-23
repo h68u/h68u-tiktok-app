@@ -1,18 +1,24 @@
 package srv
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"tikapp/api"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
 	"tikapp/util"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 var logger = log.NameSpace("UserService")
 
 type User struct{}
+
+// 根据 Uber 的指导原则 这里是检查 User 是否实现了 api 中的所有方法
+// 即检查项目是否缺少必要的接口
+var _ api.UserHandler = (*User)(nil)
 
 type UserLoginReq struct {
 	Username string `json:"username"`

@@ -6,6 +6,12 @@ import (
 	srv "tikapp/service"
 )
 
+// Register 新用户注册
+func Register(c *gin.Context) {
+
+}
+
+// Login 用户登录
 func Login(c *gin.Context) {
 	var u srv.User
 	login, err := u.Login(c)

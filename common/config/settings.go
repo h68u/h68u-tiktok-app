@@ -37,11 +37,18 @@ type Log struct {
 	TimeFormat  string
 }
 
+type Minio struct {
+	Endpoint        string
+	AccessKeyID     string
+	SecretAccessKey string
+}
+
 var (
 	AppCfg   App
 	MysqlCfg Mysql
 	RedisCfg Redis
 	LogCfg   Log
+	MinioCfg Minio
 )
 
 func Init() {
@@ -60,6 +67,10 @@ func Init() {
 	}
 
 	if err = conf.UnmarshalKey("log", &LogCfg); err != nil {
+		logrus.Panicf("parse config err, log: %v", err)
+	}
+
+	if err = conf.UnmarshalKey("minio", &MinioCfg); err != nil {
 		logrus.Panicf("parse config err, log: %v", err)
 	}
 

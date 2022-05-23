@@ -31,3 +31,8 @@ log:
   logSavePath: logs
   logFileExt: log
   timeFormat: 2006-01-02 - 15:04:05.000
+
+minio:
+  endpoint: 127.0.0.1:9000
+  accessKeyID: admin
+  secretAccessKey: admin12345678

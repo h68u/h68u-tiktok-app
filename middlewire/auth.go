@@ -1,4 +1,4 @@
-package handler
+package middlewire
 
 import (
 	"github.com/gin-gonic/gin"

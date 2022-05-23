@@ -6,12 +6,24 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.1.2
+	github.com/minio/minio-go/v6 v6.0.57
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0
 	go.uber.org/zap v1.21.0
 	gorm.io/driver/mysql v1.3.3
 	gorm.io/gorm v1.23.5
+)
+
+require (
+	github.com/klauspost/cpuid v1.2.3 // indirect
+	github.com/minio/md5-simd v1.1.0 // indirect
+	github.com/minio/sha256-simd v0.1.1 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.19.0 // indirect
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 )
 
 require (

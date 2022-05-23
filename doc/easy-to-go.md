@@ -8,7 +8,7 @@
 
    启动服务：需要进入到项目根目录下的 `cmd` 文件夹，执行 `go run .`
 
-   ![image-20220521223054140](D:\misc\vscodego\h68u-tiktok-app\doc\imgs\image-20220521223054140.png)
+   ![image-20220521223054140](.\imgs\image-20220521223054140.png)
 
    出现如上则说明服务已启动，上图所示，服务开在 localhost:8080
 
@@ -18,7 +18,7 @@
 
    如果是浏览器，拿的结果应该是：
 
-   ![image-20220521223352434](D:\misc\vscodego\h68u-tiktok-app\doc\imgs\image-20220521223352434.png)
+   ![image-20220521223352434](.\imgs\image-20220521223352434.png)
 
    说明服务器启动成功
 

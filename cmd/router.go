@@ -2,12 +2,16 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"tikapp/middlewire"
 	ctrl "tikapp/controller"
 )
 
 func handle(r *gin.Engine) {
 	// TODO: 或许可以在这加一个全局处理 err 的 handler
 	// r.Any("/", ctrl.ErrorHanler)
+	
+	// 鉴权
+	r.Use(middlewire.Auth())
 
 	// 测试
 	r.Any("/ping", ctrl.Ping)

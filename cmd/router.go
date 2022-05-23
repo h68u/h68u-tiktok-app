@@ -14,9 +14,6 @@ func handle(r *gin.Engine) {
 	// 鉴权
 	r.Use(middlewire.Auth())
 
-	// 鉴权
-	r.Use(middlewire.Auth())
-
 	// 测试
 	r.Any("/ping", ctrl.Ping)
 
@@ -33,7 +30,7 @@ func handle(r *gin.Engine) {
 		userGroup.GET("/")
 
 		// 新用户注册
-		userGroup.POST("/register")
+		userGroup.POST("/register", ctrl.Register)
 
 		// 用户登录
 		userGroup.POST("/login", ctrl.Login)
@@ -43,43 +40,43 @@ func handle(r *gin.Engine) {
 	publishGroup := basic.Group("/publish")
 	{
 		// 用户上传视频
-		publishGroup.POST("/action")
+		publishGroup.POST("/action", ctrl.PublishAction)
 
 		// 直接列出用户投稿过的所有视频
-		publishGroup.GET("/list")
+		publishGroup.GET("/list", ctrl.PublishList)
 	}
 
 	// 点赞相关
 	favoriteGroup := basic.Group("/favorite")
 	{
 		// 点赞 取消点赞
-		favoriteGroup.POST("/action")
+		favoriteGroup.POST("/action", ctrl.FavoriteAction)
 
 		// 获取点赞列表
-		favoriteGroup.GET("/list")
+		favoriteGroup.GET("/list", ctrl.FavoriteList)
 	}
 
 	// 评论相关
 	commentGroup := basic.Group("/comment")
 	{
 		// 评论
-		commentGroup.POST("/action")
+		commentGroup.POST("/action", ctrl.CommentAction)
 
 		// 倒叙查看评论
-		commentGroup.GET("/list")
+		commentGroup.GET("/list", ctrl.CommentList)
 	}
 
 	// 用户间关系操作 如关注 获取关注列表
 	relationGroup := basic.Group("/relation")
 	{
 		// 对指定用户 关注 取关
-		relationGroup.POST("/action")
+		relationGroup.POST("/action", ctrl.RelationAction)
 
 		// 获取用户的关注列表
-		relationGroup.GET("/follow/list")
+		relationGroup.GET("/follow/list", ctrl.FollowList)
 
 		// 获取用户的粉丝列表
-		relationGroup.GET("/follower/list")
+		relationGroup.GET("/follower/list", ctrl.FollowerList)
 	}
 
 }

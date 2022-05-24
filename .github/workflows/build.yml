@@ -40,13 +40,13 @@ jobs:
       - name: Sync to oss
         uses: manyuanrong/setup-ossutil@master
         with:
-          endpoint: oss-accelerate.aliyuncs.com
+          endpoint: oss-cn-hangzhou.aliyuncs.com
           access-key-id: ${{ secrets.ALIYUN_KEY }}
           access-key-secret: ${{ secrets.ALIYUN_SECRET }}
 
       - name: cp files to aliyun
         run: |
-          ossutil cp -rf ${{ env.CI_BIN }} oss://sjc-mall/${{ env.CI_BIN }}/${{ env.CI_BIN }}
+          ossutil cp -rf cmd/${{ env.CI_BIN }} oss://sjc-mall/${{ env.CI_BIN }}/${{ env.CI_BIN }}
 
       - name: Webhook
         run: |

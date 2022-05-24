@@ -40,7 +40,7 @@ jobs:
       - name: Sync to oss
         uses: manyuanrong/setup-ossutil@master
         with:
-          endpoint: oss-accelerate.aliyuncs.com
+          endpoint: oss-cn-hangzhou.aliyuncs.com
           access-key-id: ${{ secrets.ALIYUN_KEY }}
           access-key-secret: ${{ secrets.ALIYUN_SECRET }}
 

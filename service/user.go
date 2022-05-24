@@ -23,8 +23,8 @@ type User struct{}
 var _ api.UserHandler = (*User)(nil)
 
 type UserLoginReq struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `form:"username"`
+	Password string `form:"password"`
 }
 
 type UserLoginResp struct {
@@ -44,7 +44,7 @@ type UserRegisterResp struct {
 
 func (u User) Login(c *gin.Context) (interface{}, error) {
 	var req UserLoginReq
-	err := c.ShouldBindWith(&req, binding.JSON)
+	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		logger.Error("parse json error")
 		return nil, err

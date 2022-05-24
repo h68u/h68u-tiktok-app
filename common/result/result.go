@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	SuccessStatus       = newStatus(200, "success")
-	LoginErrorStatus    = newStatus(400, "login happen error")
-	RegisterErrorStatus = newStatus(401, "register happen error")
-
+	SuccessStatus           = newStatus(200, "success")
+	LoginErrorStatus        = newStatus(400, "login happen error")
+	RegisterErrorStatus     = newStatus(401, "register happen error")
 	UsernameExitErrorStatus = newStatus(402, "username already exists")
+	TokenErrorStatus        = newStatus(403, "token error")
+	InfoErrorStatus         = newStatus(404, "can't get user info")
 )
 
 type Status struct {

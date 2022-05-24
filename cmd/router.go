@@ -30,7 +30,7 @@ func handle(r *gin.Engine) {
 		userGroup.GET("/", ctrl.Info)
 
 		// 新用户注册
-		userGroup.POST("/register", ctrl.Register)
+		userGroup.POST("/register/", ctrl.Register)
 
 		// 用户登录
 		userGroup.POST("/login", ctrl.Login)

@@ -46,7 +46,7 @@ jobs:
 
       - name: cp files to aliyun
         run: |
-          ossutil cp -rf ${{ env.CI_BIN }} oss://sjc-mall/${{ env.CI_BIN }}/${{ env.CI_BIN }}
+          ossutil cp -rf cmd/${{ env.CI_BIN }} oss://sjc-mall/${{ env.CI_BIN }}/${{ env.CI_BIN }}
 
       - name: Webhook
         run: |

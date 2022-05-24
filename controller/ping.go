@@ -3,5 +3,5 @@ package ctrl
 import "github.com/gin-gonic/gin"
 
 func Ping(c *gin.Context) {
-	c.JSON(200, gin.H{"status": "测试webhook111111111!"})
+	c.JSON(200, gin.H{"status": "测试webhook!"})
 }

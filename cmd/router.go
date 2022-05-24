@@ -27,7 +27,7 @@ func handle(r *gin.Engine) {
 	userGroup := basic.Group("/user")
 	{
 		// 获取用户登录信息
-		userGroup.GET("/")
+		userGroup.GET("/", ctrl.Info)
 
 		// 新用户注册
 		userGroup.POST("/register", ctrl.Register)

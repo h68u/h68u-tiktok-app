@@ -114,3 +114,25 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 		Token:  token,
 	}, nil
 }
+
+// Info 依靠用户 ID 查询用户信息，因为还要返回是否关注，所以还要传入当前的用户 ID
+func (u User) Info(myUserID, targetUserID int64) (model.User, bool, error) {
+	var user model.User
+	var isFollow int64
+
+	// 查询用户信息
+	err := db.MySQL.Debug().Model(&model.User{}).Where("id = ?", targetUserID).First(&user).Error
+	if err != nil {
+		logger.Error("mysql happen error")
+		return model.User{}, false, err
+	}
+
+	// 检查是否关注
+	err = db.MySQL.Debug().Model(&model.Follow{}).Where("follow_id = ? and user_id = ?", myUserID, targetUserID).Count(&isFollow).Error
+	if err != nil {
+		logger.Error("mysql happen error")
+		return model.User{}, false, err
+	}
+
+	return user, isFollow > 0, nil
+}

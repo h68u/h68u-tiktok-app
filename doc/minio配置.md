@@ -42,3 +42,35 @@ minio:
 ```
 
 # 2. [minio-go API文档](http://docs.minio.org.cn/docs/master/golang-client-api-reference#PutObject)
+
+# 3. 使用样例
+###  3.1 文件上传和url获取
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"tikapp/common/oss"
+	"time"
+)
+
+const BucketName = "test"
+
+func main() {
+	// 创建一个桶,相当于一个存储的容器
+	oss.CreateMinoBuket(BucketName)
+	// 打开要上传的文件
+	file, _ := os.Open("good.mp4")
+	reader := bufio.NewReader(file)
+	//上传文件, -1 代表文件大小未知
+	ok := oss.UploadVideo(BucketName, file.Name(), reader, -1)
+	if !ok {
+		fmt.Println("upload file error")
+	}
+	// 获取已上传文件的url, 设置了有效期限
+	fileUrl := oss.GetVideoUrl(BucketName, "good.mp4", time.Second*24*60*60)
+	fmt.Println(fileUrl)
+}
+```

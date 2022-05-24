@@ -2,6 +2,8 @@ package middlewire
 
 import (
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/util"
@@ -14,7 +16,7 @@ var logger = log.NameSpace("auth")
 func Auth() gin.HandlerFunc {
 	//先判断请求头是否为空，为空则为游客状态
 	return func(c *gin.Context) {
-		token := c.GetHeader("token")
+		token := c.DefaultQuery("token", "")
 		if token == "" {
 			/*//判断浏览器是否存在cookie，存在表示非第一次访问
 			logger.Info("start valid cookie")
@@ -87,8 +89,24 @@ func Auth() gin.HandlerFunc {
 				panic(err1)
 			}
 			db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour)
-			//替换header
-			c.Header("token", accessToken)
+			//获取之前请求的所有query参数
+			dataMap := make(map[string]string)
+			for key, _ := range c.Request.URL.Query() {
+				if key == "token" {
+					dataMap[key] = accessToken
+				} else {
+					dataMap[key] = c.Query(key)
+				}
+			}
+			//转发路由携带新token
+			url := c.Request.URL.String()
+			split := strings.Split(url, "?")
+			pre := split[0]
+			for key, val := range dataMap {
+				pre = pre + "?" + key + "=" + val + "&"
+			}
+			newUrl := strings.TrimSuffix(pre, "&")
+			c.Redirect(http.StatusMovedPermanently, newUrl)
 			c.Set("userId", userId)
 			c.Next()
 			return

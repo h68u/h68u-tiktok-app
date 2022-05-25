@@ -20,7 +20,7 @@ func handle(r *gin.Engine) {
 	basic := r.Group("/douyin")
 
 	// 视频流
-	feed := basic.Group("/feed")
+	feed := basic.Group("/feed", ctrl.Feed)
 	feed.GET("/")
 
 	// 用户相关

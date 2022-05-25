@@ -15,6 +15,7 @@ var (
 	NoLoginErrorStatus      = newStatus(405, "user no login")
 	FileErrorStatus         = newStatus(406, "upload file error")
 	PublishErrorStatus      = newStatus(407, "publish error")
+	FeedErrorStatus         = newStatus(408, "feed error")
 )
 
 type Status struct {

@@ -1,7 +1,6 @@
 package srv
 
 import (
-	"bufio"
 	"errors"
 	"mime/multipart"
 	"tikapp/common/db"
@@ -18,17 +17,16 @@ type VideoPublishReq struct {
 
 type Video struct{}
 
-const BucketName = "tiktok-video"
+const BucketName = "tiktok-video11"
 
 func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId int64) error {
-	oss.CreateBucket(BucketName)
+	//oss.CreateBucket(BucketName)
 	file, err := data.Open()
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	reader := bufio.NewReader(file)
-	ok, err := oss.UploadVideoToOss(BucketName, data.Filename, reader)
+	ok, err := oss.UploadVideoToOss(BucketName, data.Filename, file)
 	if err != nil {
 		return err
 	}

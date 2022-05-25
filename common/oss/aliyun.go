@@ -3,7 +3,7 @@ package oss
 import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"io"
+	"mime/multipart"
 	"tikapp/common/config"
 )
 
@@ -30,26 +30,20 @@ func CreateBucket(name string) {
 	logger.Infof("Successfully created %s\n", name)
 }
 
-func UploadVideoToOss(bucketName string, objectName string, reader io.Reader) (bool, error) {
+func UploadVideoToOss(bucketName string, objectName string, reader multipart.File) (bool, error) {
 	bucket, err := AliyunClient.Bucket(bucketName)
 	if err != nil {
 		return false, err
 	}
 	err = bucket.PutObject(objectName, reader)
 	if err != nil {
+		fmt.Println(err)
 		return false, err
 	}
 	return true, nil
 }
 
 func GetOssVideoUrlAndImgUrl(bucketName string, objectName string) (string, string, error) {
-	bucket, err := AliyunClient.Bucket(bucketName)
-	if err != nil {
-		return "", "", err
-	}
-	url, err := bucket.SignURL(objectName, oss.HTTPGet, 30*24*60*60*1000)
-	if err != nil {
-		return "", "", err
-	}
+	url := "https://" + bucketName + "." + config.AliyunCfg.Endpoint + "/" + objectName
 	return url, url + "?x-oss-process=video/snapshot,t_0,f_jpg,w_0,h_0,m_fast,ar_auto", nil
 }

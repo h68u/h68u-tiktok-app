@@ -81,5 +81,8 @@ func Init() {
 		logrus.Panicf("parse config err, log: %v", err)
 	}
 
+	if err = conf.UnmarshalKey("aliyun", &AliyunCfg); err != nil {
+		logrus.Panicf("parse config err, log: %v", err)
+	}
 	logrus.Debug("parse config success")
 }

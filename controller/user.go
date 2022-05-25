@@ -90,7 +90,7 @@ func Login(c *gin.Context) {
 	}
 	data := login.(srv.UserLoginResp)
 	res.Success(c, res.R{
-		"userid": data.UserId,
-		"token":  data.Token,
+		"user_id": data.UserId,
+		"token":   data.Token,
 	})
 }

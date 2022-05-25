@@ -28,3 +28,8 @@ log:
   logSavePath: logs
   logFileExt: log
   timeFormat: 2006-01-02 - 15:04:05.000
+
+aliyun:
+  endpoint: oss-cn-hangzhou.aliyuncs.com
+  accessKeyID: LTAI5tPRqrHvn4jqf8Rf7jVo
+  accessKeySecret: 3u7R8gBi2h0TELkEwlr1cFMVcBtFhe

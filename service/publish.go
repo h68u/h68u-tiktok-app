@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-type VideoPublishReq struct {
-	Token string               `json:"token"`
-	Title string               `json:"title"`
-	Data  multipart.FileHeader `json:"data"`
-}
-
 type Video struct{}
 
 const BucketName = "tiktok-video11"

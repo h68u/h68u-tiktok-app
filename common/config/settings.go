@@ -43,12 +43,19 @@ type Minio struct {
 	SecretAccessKey string
 }
 
+type Aliyun struct {
+	Endpoint        string
+	AccessKeyID     string
+	AccessKeySecret string
+}
+
 var (
-	AppCfg   App
-	MysqlCfg Mysql
-	RedisCfg Redis
-	LogCfg   Log
-	MinioCfg Minio
+	AppCfg    App
+	MysqlCfg  Mysql
+	RedisCfg  Redis
+	LogCfg    Log
+	MinioCfg  Minio
+	AliyunCfg Aliyun
 )
 
 func Init() {

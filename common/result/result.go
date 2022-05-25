@@ -12,6 +12,7 @@ var (
 	UsernameExitErrorStatus = newStatus(402, "username already exists")
 	TokenErrorStatus        = newStatus(403, "token error")
 	InfoErrorStatus         = newStatus(404, "can't get user info")
+	EmptyErrorStatus        = newStatus(405, "username or password is empty")
 )
 
 type Status struct {

@@ -61,9 +61,12 @@ hdu-team tiktok-summer
 
 ## 项目分层
 
+![img](doc/imgs/about.png)  
+
 目前项目从下到上分为：
 
-#### common/
+### common/
+
 
 - common/config : 负责读取配置文件，也就是项目根目录下的 `app.yaml`，其格式请参考 `app.example.yaml` ，其比较详细的介绍在项目的 `doc` 文件夹中
 - common/db : 封装了数据库 MySQL 和 Redis，使用时只需要 db.MySQL.Xxxx 、db.Redis.Xxxx

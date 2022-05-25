@@ -49,7 +49,7 @@ func Info(c *gin.Context) {
 		if err != nil {
 			res.Error(c, res.Status{
 				StatusCode: res.TokenErrorStatus.StatusCode,
-				StatusMsg:  res.TokenErrorStatus.StatusMsg,
+				StatusMsg:  "token error",
 			})
 			return
 		}
@@ -60,7 +60,7 @@ func Info(c *gin.Context) {
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.InfoErrorStatus.StatusCode,
-			StatusMsg:  res.InfoErrorStatus.StatusMsg,
+			StatusMsg:  "info error",
 		})
 		return
 	}

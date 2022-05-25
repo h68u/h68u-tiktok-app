@@ -18,6 +18,7 @@ func PublishAction(c *gin.Context) {
 	}
 	title := c.PostForm("title")
 	data, err := c.FormFile("data")
+
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.FileErrorStatus.StatusCode,

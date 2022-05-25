@@ -18,7 +18,7 @@ func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		token := ""
-		if method == "get" {
+		if method == "GET" {
 			token = c.DefaultQuery("token", "")
 		} else {
 			token = c.PostForm("token")

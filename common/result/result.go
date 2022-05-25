@@ -15,6 +15,7 @@ var (
 	NoLoginErrorStatus      = newStatus(405, "user no login")
 	FileErrorStatus         = newStatus(406, "upload file error")
 	PublishErrorStatus      = newStatus(407, "publish error")
+	EmptyErrorStatus        = newStatus(408, "username or password is empty")
 )
 
 type Status struct {

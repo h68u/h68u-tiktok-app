@@ -19,6 +19,11 @@ func Register(c *gin.Context) {
 				StatusCode: res.UsernameExitErrorStatus.StatusCode,
 				StatusMsg:  res.UsernameExitErrorStatus.StatusMsg,
 			})
+		} else if err == srv.ErrEmpty {
+			res.Error(c, res.Status{
+				StatusCode: res.EmptyErrorStatus.StatusCode,
+				StatusMsg:  res.EmptyErrorStatus.StatusMsg,
+			})
 		} else {
 			res.Error(c, res.Status{
 				StatusCode: res.RegisterErrorStatus.StatusCode,

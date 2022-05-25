@@ -23,8 +23,8 @@ func MinioInit() {
 	}
 }
 
-// CreateMinoBuket 创建minio 桶
-func CreateMinoBuket(bucketName string) {
+// CreateMinoBucket 创建minio 桶
+func CreateMinoBucket(bucketName string) {
 	location := "us-east-1"
 	err := Client.MakeBucket(bucketName, location)
 	if err != nil {

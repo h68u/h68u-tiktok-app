@@ -3,6 +3,7 @@ module tikapp
 go 1.18
 
 require (
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.4+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -16,13 +17,16 @@ require (
 )
 
 require (
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 )
 
 require (

@@ -3,6 +3,7 @@ package srv
 import (
 	"errors"
 	"gorm.io/gorm"
+	"strings"
 	"tikapp/api"
 	"tikapp/common/db"
 	"tikapp/common/log"
@@ -79,6 +80,7 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 }
 
 var ErrUsernameExits = errors.New("username already exists")
+var ErrEmpty = errors.New("username or password is empty")
 
 func (u User) Register(c *gin.Context) (interface{}, error) {
 	var req UserRegisterReq
@@ -86,6 +88,10 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		userLogger.Error("parse json error")
 		return nil, err
+	}
+
+	if len(strings.TrimSpace(req.Username)) == 0 || len(strings.TrimSpace(req.Password)) == 0 {
+		return nil, ErrEmpty
 	}
 
 	var count int64

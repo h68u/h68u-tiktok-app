@@ -40,7 +40,7 @@ func handle(r *gin.Engine) {
 	publishGroup := basic.Group("/publish")
 	{
 		// 用户上传视频
-		publishGroup.POST("/action/", ctrl.PublishAction)
+		publishGroup.POST("/action", ctrl.PublishAction)
 
 		// 直接列出用户投稿过的所有视频
 		publishGroup.GET("/list/", ctrl.PublishList)

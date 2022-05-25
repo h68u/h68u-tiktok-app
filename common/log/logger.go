@@ -16,7 +16,7 @@ import (
 var Logger *zap.Logger
 
 // NameSpace 提供带有模块命名空间的logger
-// eg. logger.NameSpace("api").Error("failed to ...")
+// blame: clstilmldy 使用没法打印日志
 func NameSpace(name string) *zap.SugaredLogger {
 	return zap.S().Named(name)
 }
@@ -79,10 +79,10 @@ func getLogWriter(fileName string) zapcore.WriteSyncer {
 	}
 	lumberJackLogger := &lumberjack.Logger{
 		Filename:   dir + sperator + fileName, // 日志文件路径
-		MaxSize:    5,                    // 设置日志文件最大尺寸
-		MaxBackups: 5,                    // 设置日志文件最多保存多少个备份
-		MaxAge:     30,                   // 设置日志文件最多保存多少天
-		Compress:   true,                 // 是否压缩 disabled by default
+		MaxSize:    5,                         // 设置日志文件最大尺寸
+		MaxBackups: 5,                         // 设置日志文件最多保存多少个备份
+		MaxAge:     30,                        // 设置日志文件最多保存多少天
+		Compress:   true,                      // 是否压缩 disabled by default
 	}
 	// 返回同步方式写入日志文件的zapcore.WriteSyncer
 	return zapcore.AddSync(lumberJackLogger)

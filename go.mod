@@ -1,6 +1,6 @@
 module tikapp
 
-go 1.17
+go 1.18
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.4+incompatible

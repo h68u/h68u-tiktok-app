@@ -17,6 +17,8 @@ var Logger *zap.Logger
 
 // NameSpace 提供带有模块命名空间的logger
 // blame: clstilmldy 使用没法打印日志
+// Deprecated: unable to log message, you should not use this function 
+// in your service
 func NameSpace(name string) *zap.SugaredLogger {
 	return zap.S().Named(name)
 }

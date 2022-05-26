@@ -20,8 +20,10 @@ var (
 
 	EmptyErrorStatus = newStatus(408, "username or password is empty")
 
-	QueryParamErrorStatus = newStatus(409, "query param error")
-	PermissionErrorStatus = newStatus(410, "permission error")
+	QueryParamErrorStatus     = newStatus(409, "query param error")
+	PermissionErrorStatus     = newStatus(410, "permission error")
+	CommentNotExitErrorStatus = newStatus(411, "comment not found")
+	VideoNotExitErrorStatus   = newStatus(412, "video not found")
 )
 
 type Status struct {

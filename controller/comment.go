@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"gorm.io/gorm"
 	res "tikapp/common/result"
 	srv "tikapp/service"
 )
@@ -17,6 +18,7 @@ type CommentReq struct {
 }
 
 // CommentAction 执行评论
+// todo log
 func CommentAction(c *gin.Context) {
 	userId, _ := c.Get("UserId")
 	fmt.Println(userId)
@@ -27,6 +29,8 @@ func CommentAction(c *gin.Context) {
 		// todo log
 		return
 	}
+
+	// 请求参数错误
 	if req.ActionId != 1 && req.ActionId != 2 {
 		res.Error(c, res.Status{
 			StatusCode: res.QueryParamErrorStatus.StatusCode,
@@ -35,35 +39,48 @@ func CommentAction(c *gin.Context) {
 		return
 	}
 
-	// 发布评论
-	if req.ActionId == 1 {
-		comment, err := comm.Publish(req.UserId, req.VideoId, req.CommentText)
-		if err != nil {
-			// todo log
-		}
-		res.Success(c, res.R{
-			"comment": comment,
-		})
-	}
+	var commentResp srv.CommentResp
 
-	// 删除评论
-	if req.ActionId == 2 {
-		comment, err := comm.Delete(req.UserId, req.VideoId, req.CommentId)
+	switch req.ActionId {
+	// 发布评论
+	case 1:
+		commentResp, err = comm.Publish(req.UserId, req.VideoId, req.CommentText)
 		if err != nil {
-			// todo log
+			if err == gorm.ErrRecordNotFound {
+				res.Error(c, res.Status{
+					StatusCode: res.VideoNotExitErrorStatus.StatusCode,
+					StatusMsg:  res.VideoNotExitErrorStatus.StatusMsg,
+				})
+			}
+
+			return
+		}
+	// 删除评论
+	case 2:
+		commentResp, err = comm.Delete(req.UserId, req.VideoId, req.CommentId)
+		if err != nil {
+			// 评论不存在
+			if err == gorm.ErrRecordNotFound {
+				res.Error(c, res.Status{
+					StatusCode: res.CommentNotExitErrorStatus.StatusCode,
+					StatusMsg:  res.CommentNotExitErrorStatus.StatusMsg,
+				})
+				return
+			}
 			// 权限错误, 不允许删除其他用户评论
 			if err == srv.ErrPermit {
 				res.Error(c, res.Status{
 					StatusCode: res.PermissionErrorStatus.StatusCode,
 					StatusMsg:  res.PermissionErrorStatus.StatusMsg,
 				})
+				return
 			}
-
 		}
-		res.Success(c, res.R{
-			"comment": comment,
-		})
 	}
+
+	res.Success(c, res.R{
+		"comment": commentResp,
+	})
 
 }
 

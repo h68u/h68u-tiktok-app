@@ -1,6 +1,7 @@
 package ctrl
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	res "tikapp/common/result"
 	srv "tikapp/service"
@@ -8,6 +9,7 @@ import (
 
 // PublishAction 已登录的用户上传视频
 func PublishAction(c *gin.Context) {
+	fmt.Println("进入publish")
 	userId, _ := c.Get("userId")
 	if userId == "" {
 		res.Error(c, res.Status{

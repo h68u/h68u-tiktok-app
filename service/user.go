@@ -2,6 +2,7 @@ package srv
 
 import (
 	"errors"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"strings"
 	"tikapp/api"
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+// 这个貌似没有用
 var userLogger = log.NameSpace("UserService")
 
 type User struct{}
@@ -34,8 +36,8 @@ type UserLoginResp struct {
 }
 
 type UserRegisterReq struct {
-	Username string `form:"username"`
-	Password string `form:"password"`
+	Username string `form:"username" binding:"required,min=1,max=32"`
+	Password string `form:"password" binding:"required,min=5,max=32"`
 }
 
 type UserRegisterResp struct {
@@ -87,6 +89,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		userLogger.Error("parse json error")
+		log.Logger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
 

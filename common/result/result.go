@@ -16,10 +16,12 @@ var (
 	FileErrorStatus         = newStatus(406, "upload file error")
 	PublishErrorStatus      = newStatus(407, "publish error")
 
-	FeedErrorStatus         = newStatus(409, "feed error")
+	FeedErrorStatus = newStatus(409, "feed error")
 
-	EmptyErrorStatus        = newStatus(408, "username or password is empty")
+	EmptyErrorStatus = newStatus(408, "username or password is empty")
 
+	QueryParamErrorStatus = newStatus(409, "query param error")
+	PermissionErrorStatus = newStatus(410, "permission error")
 )
 
 type Status struct {

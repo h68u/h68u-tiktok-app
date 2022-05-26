@@ -16,11 +16,9 @@ var logger = log.NameSpace("auth")
 func Auth() gin.HandlerFunc {
 	//先判断请求头是否为空，为空则为游客状态
 	return func(c *gin.Context) {
-		method := c.Request.Method
 		token := ""
-		if method == "GET" {
-			token = c.DefaultQuery("token", "")
-		} else {
+		token = c.DefaultQuery("token", "")
+		if token == "" {
 			token = c.PostForm("token")
 		}
 		if token == "" {

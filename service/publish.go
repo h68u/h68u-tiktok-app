@@ -46,3 +46,7 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 	}
 	return nil
 }
+
+//func (v Video) PublishList(myUserID, targetUserID int64) ([]VideoDemo, error) {
+//
+//}

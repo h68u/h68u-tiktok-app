@@ -137,8 +137,8 @@ func (u User) Info(myUserID, targetUserID int64) (model.User, bool, error) {
 	}
 
 	// 检查是否关注
-	if myUserID == 0 {
-		return user, false, nil // 游客自然不用查询，直接返回
+	if myUserID == 0 || myUserID == targetUserID {
+		return user, false, nil // 游客和查看自己的主页自然没有关注这一说，直接返回
 	}
 	err = db.MySQL.Debug().Model(&model.Follow{}).Where("follow_id = ? and user_id = ?", myUserID, targetUserID).Count(&isFollow).Error
 	if err != nil {

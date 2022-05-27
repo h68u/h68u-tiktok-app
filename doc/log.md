@@ -8,7 +8,7 @@
    var logger = log.Namespace("UserService")
 
    if err != nil {
-       log.Error("验证出错了")
+       logger.Error("验证出错了")
    }
    ```
    同时项目文件下会创建`runtime/log/error.log`

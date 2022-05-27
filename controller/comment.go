@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
+	"tikapp/common/log"
 	res "tikapp/common/result"
 	srv "tikapp/service"
 )
@@ -18,7 +19,7 @@ type CommentReq struct {
 }
 
 // CommentAction 执行评论
-// todo log
+// todo 错误处理有点繁琐, 之后加个中间件处理
 func CommentAction(c *gin.Context) {
 	userId, _ := c.Get("UserId")
 	fmt.Println(userId)
@@ -26,7 +27,11 @@ func CommentAction(c *gin.Context) {
 	var req CommentReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		// todo log
+		log.Logger.Error("parse json error")
+		res.Error(c, res.Status{
+			StatusCode: res.ServerErrorStatus.StatusCode,
+			StatusMsg:  res.ServerErrorStatus.StatusMsg,
+		})
 		return
 	}
 

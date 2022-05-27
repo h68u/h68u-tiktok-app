@@ -21,13 +21,13 @@ func CreateBucket(name string) {
 	if err != nil {
 		exist, err := AliyunClient.IsBucketExist(name)
 		if err == nil && exist {
-			logger.Infof("We already own %s\n", name)
+			logger.Info(fmt.Sprintf("We already own %s\n", name))
 		} else {
 			logger.Error("create bucket error")
 			return
 		}
 	}
-	logger.Infof("Successfully created %s\n", name)
+	logger.Info(fmt.Sprintf("Successfully created %s\n", name))
 }
 
 func UploadVideoToOss(bucketName string, objectName string, reader multipart.File) (bool, error) {

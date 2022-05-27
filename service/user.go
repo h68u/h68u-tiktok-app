@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"strings"
-	"tikapp/api"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
@@ -16,15 +15,9 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-// 这个貌似没有用
-var userLogger = log.NameSpace("UserService")
+var userLogger = log.Namespace("UserService")
 
 type User struct{}
-
-// 根据 Uber 的指导原则 这里是检查 User 是否实现了 api 中的所有方法
-// 即检查项目是否缺少必要的接口
-var _ api.UserHandler = (*User)(nil)
-
 type UserLoginReq struct {
 	Username string `form:"username"`
 	Password string `form:"password"`
@@ -89,7 +82,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		userLogger.Error("parse json error")
-		log.Logger.Error("validate err", zap.Error(err))
+		userLogger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
 

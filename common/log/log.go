@@ -1,6 +1,7 @@
 package log
 
 import (
+	"os"
 	"unsafe"
 
 	"go.uber.org/zap"
@@ -15,7 +16,7 @@ func (n namespace) Error(msg string, args ...zap.Field) {
 		a = append(a, args...)
 		logger.Error(msg, a...)
 	}
-	logger.Error(msg)
+	logger.Error(msg, zap.Namespace(*(*string)(unsafe.Pointer(&n))))
 }
 
 func (n namespace) Info(msg string, args ...zap.Field) {
@@ -25,7 +26,7 @@ func (n namespace) Info(msg string, args ...zap.Field) {
 		a = append(a, args...)
 		logger.Info(msg, a...)
 	}
-	logger.Info(msg, args...)
+	logger.Info(msg, zap.Namespace(*(*string)(unsafe.Pointer(&n))))
 }
 
 func (n namespace) Warn(msg string, args ...zap.Field) {
@@ -35,7 +36,7 @@ func (n namespace) Warn(msg string, args ...zap.Field) {
 		a = append(a, args...)
 		logger.Warn(msg, a...)
 	}
-	logger.Warn(msg)
+	logger.Warn(msg, zap.Namespace(*(*string)(unsafe.Pointer(&n))))
 }
 
 func (n *namespace) Debug(msg string, args ...zap.Field) {
@@ -45,12 +46,13 @@ func (n *namespace) Debug(msg string, args ...zap.Field) {
 		a = append(a, args...)
 		logger.Debug(msg, a...)
 	}
-	logger.Debug(msg, args...)
+	logger.Debug(msg, zap.Namespace(*(*string)(unsafe.Pointer(&n))))
 }
 
 // Namespace 返回一个带有名称的执行全局 logger 的对象
 // 用于给定 Namespace 的日志记录
 // 日志将直接输出到日志文件
 func Namespace(n string) namespace {
-	return namespace(n)
+	wd, _ := os.Getwd()
+	return namespace(wd + " --> " + n)
 }

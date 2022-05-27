@@ -10,18 +10,8 @@ import (
 	"time"
 )
 
-//type ZapLevel int
-
-// Logger 整个项目的Logger
-var Logger *zap.Logger
-
-// NameSpace 提供带有模块命名空间的logger
-// blame: clstilmldy 使用没法打印日志
-// Deprecated: unable to log message, you should not use this function 
-// in your service
-func NameSpace(name string) *zap.SugaredLogger {
-	return zap.S().Named(name)
-}
+// logger 整个项目的Logger
+var logger *zap.Logger
 
 func Init() {
 	// 调试级别
@@ -59,7 +49,7 @@ func Init() {
 	}
 
 	// zap.AddCaller() 可以获取到文件名和行号
-	Logger = zap.New(zapcore.NewTee(cores[:]...), zap.AddCaller())
+	logger = zap.New(zapcore.NewTee(cores[:]...), zap.AddCaller())
 }
 
 func pathExists(path string) bool {

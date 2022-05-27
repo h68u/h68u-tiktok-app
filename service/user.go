@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"strings"
-	"tikapp/api"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
@@ -16,15 +15,9 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-// 这个貌似没有用
-var userLogger = log.NameSpace("UserService")
+var userLogger = log.Namespace("UserService")
 
 type User struct{}
-
-// 根据 Uber 的指导原则 这里是检查 User 是否实现了 api 中的所有方法
-// 即检查项目是否缺少必要的接口
-var _ api.UserHandler = (*User)(nil)
-
 type UserLoginReq struct {
 	Username string `form:"username"`
 	Password string `form:"password"`
@@ -89,7 +82,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		userLogger.Error("parse json error")
-		log.Logger.Error("validate err", zap.Error(err))
+		userLogger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
 
@@ -125,26 +118,37 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 }
 
 // Info 依靠用户 ID 查询用户信息，因为还要返回是否关注，所以还要传入当前的用户 ID
-func (u User) Info(myUserID, targetUserID int64) (model.User, bool, error) {
-	var user model.User
-	var isFollow int64
+func (u User) Info(myUserID, targetUserID int64) (UserDemo, error) {
+	var userInTable model.User //返回的格式和表中格式不一样
+	var user UserDemo
+	var followCount int64
 
 	// 查询用户信息
-	err := db.MySQL.Debug().Model(&model.User{}).Where("id = ?", targetUserID).First(&user).Error
+	err := db.MySQL.Debug().Model(&model.User{}).Where("id = ?", targetUserID).First(&userInTable).Error
 	if err != nil {
 		userLogger.Error("mysql happen error")
-		return model.User{}, false, err
+		return UserDemo{}, err
 	}
+
+	// 把临时结构体中的信息拷贝至返回体中
+	user.Id = userInTable.Id
+	user.Name = userInTable.Name
+	user.FollowerCount = userInTable.FollowerCount
+	user.FollowCount = userInTable.FollowCount
 
 	// 检查是否关注
 	if myUserID == 0 || myUserID == targetUserID {
-		return user, false, nil // 游客和查看自己的主页自然没有关注这一说，直接返回
+		return user, nil // 游客和查看自己的主页自然没有关注这一说，直接返回
 	}
-	err = db.MySQL.Debug().Model(&model.Follow{}).Where("follow_id = ? and user_id = ?", myUserID, targetUserID).Count(&isFollow).Error
+	err = db.MySQL.Debug().Model(&model.Follow{}).Where("follow_id = ? and user_id = ?", myUserID, targetUserID).Count(&followCount).Error
 	if err != nil {
 		userLogger.Error("mysql happen error")
-		return model.User{}, false, err
+		return UserDemo{}, err
 	}
 
-	return user, isFollow > 0, nil
+	if followCount != 0 {
+		user.IsFollow = true
+	}
+
+	return user, nil
 }

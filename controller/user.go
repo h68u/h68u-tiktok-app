@@ -41,8 +41,8 @@ func Register(c *gin.Context) {
 
 // Info 获取用户信息
 func Info(c *gin.Context) {
-	var tmp srv.User
-	var isFollow bool
+	var u srv.User
+	//var isFollow bool
 	var myUserID int64
 	var err error
 	targetUserID, _ := strconv.Atoi(c.Query("user_id"))
@@ -61,7 +61,7 @@ func Info(c *gin.Context) {
 	}
 
 	// 调用服务层
-	u, isFollow, err := tmp.Info(myUserID, int64(targetUserID))
+	user, err := u.Info(myUserID, int64(targetUserID))
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.InfoErrorStatus.StatusCode,
@@ -72,13 +72,7 @@ func Info(c *gin.Context) {
 
 	// 因为看文档返回时user要打包，所以这里也要打包
 	res.Success(c, res.R{
-		"user": gin.H{
-			"id":             u.Id,
-			"name":           u.Username,
-			"follow_count":   u.FollowCount,
-			"follower_count": u.FollowerCount,
-			"is_follow":      isFollow,
-		},
+		"user": user,
 	})
 }
 

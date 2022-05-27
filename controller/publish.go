@@ -42,5 +42,26 @@ func PublishAction(c *gin.Context) {
 
 // PublishList 列出当前用户所有的投稿视频
 func PublishList(c *gin.Context) {
-
+	//myUserID, err := util.GetUsernameFormToken(c.Query("token"))
+	//targetUserID, _ := strconv.Atoi(c.Query("user_id"))
+	//if err != nil {
+	//	res.Error(c, res.Status{
+	//		StatusCode: res.TokenErrorStatus.StatusCode,
+	//		StatusMsg:  "token error",
+	//	})
+	//	return
+	//}
+	//
+	//var v srv.Video
+	//list, err := v.PublishList(myUserID, int64(targetUserID))
+	//if err != nil {
+	//	res.Error(c, res.Status{
+	//		StatusCode: res.PublishErrorStatus.StatusCode,
+	//		StatusMsg:  "获取视频列表错误",
+	//	})
+	//	return
+	//}
+	//res.Success(c, res.R{
+	//	"list": list,
+	//})
 }

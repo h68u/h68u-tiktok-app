@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var logger = log.NameSpace("minio")
+var logger = log.Namespace("minio")
 
 func MinioInit() {
 	var err error
@@ -31,7 +31,7 @@ func CreateMinoBucket(bucketName string) {
 		// 检查存储桶是否已经存在。
 		exists, err := Client.BucketExists(bucketName)
 		if err == nil && exists {
-			logger.Infof("We already own %s\n", bucketName)
+			logger.Info(fmt.Sprintf("We already own %s\n", bucketName))
 		} else {
 			logger.Error("create bucket error")
 			return
@@ -44,7 +44,7 @@ func CreateMinoBucket(bucketName string) {
 		logger.Error("set bucket policy error")
 		return
 	}
-	logger.Infof("Successfully created %s\n", bucketName)
+	logger.Info(fmt.Sprintf("Successfully created %s\n", bucketName))
 }
 
 // UploadVideo 上传文件给minio指定的桶中
@@ -54,7 +54,7 @@ func UploadVideo(bucketName, objectName string, reader io.Reader, objectSize int
 		logger.Error("uploadFile error")
 		return false
 	}
-	logger.Info("Successfully uploaded bytes: ", n)
+	logger.Info(fmt.Sprintf("Successfully uploaded bytes: %v", n))
 	return true
 }
 
@@ -67,5 +67,5 @@ func GetVideoUrl(bucketName string, fileName string, expires time.Duration) stri
 		zap.L().Error(err.Error())
 		return ""
 	}
-	return fmt.Sprintf("%s", presignedURL)
+	return presignedURL.String()
 }

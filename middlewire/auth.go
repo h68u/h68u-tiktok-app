@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var logger = log.NameSpace("auth")
+var logger = log.Namespace("auth")
 
 //鉴权接口
 func Auth() gin.HandlerFunc {
@@ -95,7 +95,7 @@ func Auth() gin.HandlerFunc {
 			db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour)
 			//获取之前请求的所有query参数
 			dataMap := make(map[string]string)
-			for key, _ := range c.Request.URL.Query() {
+			for key := range c.Request.URL.Query() {
 				if key == "token" {
 					dataMap[key] = accessToken
 				} else {
@@ -122,7 +122,6 @@ func Auth() gin.HandlerFunc {
 		}
 		c.Set("userId", userId)
 		c.Next()
-		return
 	}
 
 }

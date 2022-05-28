@@ -44,7 +44,7 @@ func CreateMinoBucket(bucketName string) {
 		logger.Error("set bucket policy error")
 		return
 	}
-	logger.Info("Successfully created bucket")
+	logger.Info(fmt.Sprintf("Successfully created %s\n", bucketName))
 }
 
 // UploadVideo 上传文件给minio指定的桶中
@@ -67,5 +67,5 @@ func GetVideoUrl(bucketName string, fileName string, expires time.Duration) stri
 		zap.L().Error(err.Error())
 		return ""
 	}
-	return fmt.Sprintf("%s", presignedURL)
+	return presignedURL.String()
 }

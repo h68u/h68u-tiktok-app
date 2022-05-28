@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-var logger = log.Namespace("auth")
-
 //鉴权接口
 func Auth() gin.HandlerFunc {
 	//先判断请求头是否为空，为空则为游客状态
@@ -45,12 +43,12 @@ func Auth() gin.HandlerFunc {
 		validToken, err := util.ValidToken(token)
 		if err != nil || validToken {
 			//token过期或者解析token发生错误
-			logger.Info("token expire or parse token error")
-			logger.Info("valid refreshToken")
+			log.Logger.Info("token expire or parse token error")
+			log.Logger.Info("valid refreshToken")
 			value := db.Redis.Get(token)
 			refreshToken, err1 := value.Result()
 			if err1 != nil {
-				logger.Error("token不合法，请确认你是否登录")
+				log.Logger.Error("token不合法，请确认你是否登录")
 				c.JSON(200, gin.H{
 					"status_code": 400,
 					"msg":         "token不合法，请确认你操作是否有误",
@@ -61,7 +59,7 @@ func Auth() gin.HandlerFunc {
 			b, err1 := util.ValidToken(refreshToken)
 			if err1 != nil || b {
 				//refreshToken出问题，表明用户三十天未登录，需要重新登录
-				logger.Info("user need login again")
+				log.Logger.Info("user need login again")
 				//直接变成访客状态
 				/*u := uuid.New()
 				c.SetCookie("visit-user", u.String(), 30*24*60*60*1000, "/", "localhost", false, true)
@@ -74,7 +72,7 @@ func Auth() gin.HandlerFunc {
 			//根据refreshToken刷新accessToken
 			userId, err1 := util.GetUsernameFormToken(refreshToken)
 			if err1 != nil {
-				logger.Error("parse token error")
+				log.Logger.Error("parse token error")
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}
@@ -82,13 +80,13 @@ func Auth() gin.HandlerFunc {
 			db.Redis.Del(token)
 			accessToken, err1 := util.CreateAccessToken(userId)
 			if err1 != nil {
-				logger.Error("parse token error")
+				log.Logger.Error("parse token error")
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}
 			newRefreshToken, err1 := util.CreateRefreshToken(userId)
 			if err1 != nil {
-				logger.Error("parse token error")
+				log.Logger.Error("parse token error")
 				//token解析不了的情况一般很少,暂时panic一下
 				panic(err1)
 			}

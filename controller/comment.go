@@ -9,8 +9,6 @@ import (
 	srv "tikapp/service"
 )
 
-var logger = log.Namespace("CommentController")
-
 type CommentActionReq struct {
 	UserId      int64  `form:"user_id"`
 	VideoId     int64  `form:"video_id"`
@@ -32,7 +30,7 @@ func CommentAction(c *gin.Context) {
 	var req CommentActionReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		logger.Error("parse json error")
+		log.Logger.Error("parse json error")
 		res.Error(c, res.Status{
 			StatusCode: res.ServerErrorStatus.StatusCode,
 			StatusMsg:  res.ServerErrorStatus.StatusMsg,
@@ -99,7 +97,7 @@ func CommentList(c *gin.Context) {
 	var req CommentListReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		logger.Error("parse json error")
+		log.Logger.Error("parse json error")
 		res.Error(c, res.Status{
 			StatusCode: res.ServerErrorStatus.StatusCode,
 			StatusMsg:  res.ServerErrorStatus.StatusMsg,

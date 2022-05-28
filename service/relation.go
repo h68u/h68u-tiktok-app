@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var relationLogger = log.Namespace("RelationService")
 
 type Relation struct{}
 
@@ -27,7 +26,7 @@ const (
 
 func (r Relation) RelationAction(d *RelationFollow) error {
 	if d.UserId == d.ToUserId {
-		relationLogger.Error("self operation")
+		log.Logger.Error("self operation")
 		return errors.New("self operation is not allowed")
 	}
 
@@ -49,7 +48,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 	if d.ActionType == doFollow && rel.CreateTime == 0 {
 		// 加入关注列表
 		if err := tx.Debug().Create(&rel).Error; err != nil {
-			relationLogger.Error("mysql error in doing follow action")
+			log.Logger.Error("mysql error in doing follow action")
 			return err
 		}
 		
@@ -59,7 +58,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 			Update("follow_count", gorm.Expr("follow_count + ?", 1)).Error;
 		err != nil {
 			tx.Rollback()
-			relationLogger.Error("mysql error in updating follow_count")
+			log.Logger.Error("mysql error in updating follow_count")
 			return err
 		}
 
@@ -69,7 +68,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 			Update("follower_count", gorm.Expr("follower_count + ?", 1)).Error;
 		err != nil {
 			tx.Rollback()
-			relationLogger.Error("mysql error in updating follower_count")
+			log.Logger.Error("mysql error in updating follower_count")
 			return err
 		}
 	}
@@ -79,7 +78,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 		// 删除关注记录
 		if err := tx.Debug().Delete(&rel).Error; err != nil {
 			tx.Rollback()
-			relationLogger.Error("mysql error in doing unfollow action")
+			log.Logger.Error("mysql error in doing unfollow action")
 			return err
 		}
 
@@ -89,7 +88,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 			Update("follow_count", gorm.Expr("follow_count - ?", 1)).Error;
 		err != nil {
 			tx.Rollback()
-			relationLogger.Error("mysql error in updating follow_count")
+			log.Logger.Error("mysql error in updating follow_count")
 			return err
 		}
 
@@ -99,7 +98,7 @@ func (r Relation) RelationAction(d *RelationFollow) error {
 			Update("follower_count", gorm.Expr("follower_count - ?", 1)).Error;
 		err != nil {
 			tx.Rollback()
-			relationLogger.Error("mysql error in updating follower_count")
+			log.Logger.Error("mysql error in updating follower_count")
 			return err
 		}
 	}

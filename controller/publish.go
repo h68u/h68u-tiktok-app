@@ -10,7 +10,7 @@ import (
 // PublishAction 已登录的用户上传视频
 func PublishAction(c *gin.Context) {
 	fmt.Println("进入publish")
-	userId, _ := c.Get("UserId")
+	userId, _ := c.Get("userId")
 	if userId == "" {
 		res.Error(c, res.Status{
 			StatusCode: res.NoLoginErrorStatus.StatusCode,

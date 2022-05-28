@@ -8,7 +8,7 @@ import (
 
 // Feed 不限制登录状态 按投稿时间获取视频流 单次最多返回 30 个
 func Feed(c *gin.Context) {
-	userId, _ := c.Get("UserId")
+	userId, _ := c.Get("userId")
 	var id int64
 	if userId == "" {
 		id = -1

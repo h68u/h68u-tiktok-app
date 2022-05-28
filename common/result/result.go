@@ -24,6 +24,7 @@ var (
 	PermissionErrorStatus     = newStatus(410, "permission error")
 	CommentNotExitErrorStatus = newStatus(411, "comment not found")
 	VideoNotExitErrorStatus   = newStatus(412, "video not found")
+	FollowErrorStatus         = newStatus(413, "follow error")
 
 	ServerErrorStatus = newStatus(500, "server error")
 )

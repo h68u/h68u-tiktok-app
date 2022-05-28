@@ -2,6 +2,7 @@ package srv
 
 import (
 	"errors"
+	"fmt"
 	"tikapp/common/db"
 	"tikapp/common/model"
 	"time"
@@ -26,6 +27,51 @@ type UserResp struct {
 	IsFollow      bool   `json:"is_follow"`
 }
 
+// Publish 发表评论
+func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (CommentResp, error) {
+	comment := model.Comment{
+		UserId:     userId,
+		VideoId:    videoId,
+		Content:    commentText,
+		CreateTime: time.Now().Unix(),
+	}
+	publisher, err := getPublisherByVideoId(videoId)
+	if err != nil {
+		return CommentResp{}, err
+	}
+	err = db.MySQL.Debug().Model(&model.Comment{}).Create(&comment).Error
+	if err != nil {
+		return CommentResp{}, err
+	}
+	return genCommentResp(comment, publisher), nil
+}
+
+// Delete 删除评论
+func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (CommentResp, error) {
+	var comment model.Comment
+	err := db.MySQL.Debug().Model(&model.Comment{}).First(&comment, commentId).Error
+	if err != nil {
+		return CommentResp{}, err
+	}
+	if comment.UserId != userId {
+		return CommentResp{}, ErrPermit
+	}
+	publisher, err := getPublisherByVideoId(videoId)
+	if err != nil {
+		return CommentResp{}, err
+	}
+	db.MySQL.Debug().Delete(&model.Comment{}, commentId)
+	return genCommentResp(comment, publisher), nil
+}
+
+func (comm *Comment) List(videoId int64) ([]CommentResp, error) {
+	var comments []model.Comment
+	result := db.MySQL.Debug().Where("video_id = ?", videoId).Preload("User").Order("create_time desc").Find(&comments)
+	resp := genCommentListResp(comments)
+	fmt.Println(result)
+	return resp, nil
+}
+
 // 根据 videoId 获得视频发布者 user
 func getPublisherByVideoId(videoId int64) (model.User, error) {
 	var video model.Video
@@ -46,7 +92,7 @@ func isFollow(userId int64) bool {
 	return false
 }
 
-func generateResp(comment model.Comment, user model.User) CommentResp {
+func genCommentResp(comment model.Comment, user model.User) CommentResp {
 	resp := CommentResp{
 		Id:         comment.Id,
 		Content:    comment.Content,
@@ -64,39 +110,24 @@ func generateResp(comment model.Comment, user model.User) CommentResp {
 	return resp
 }
 
-// Publish 发表评论
-func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (CommentResp, error) {
-	comment := model.Comment{
-		UserId:     userId,
-		VideoId:    videoId,
-		Content:    commentText,
-		CreateTime: time.Now().Unix(),
+func genCommentListResp(comments []model.Comment) []CommentResp {
+	resp := make([]CommentResp, 0, len(comments))
+	for _, comment := range comments {
+		userResp := UserResp{
+			Id:            comment.User.Id,
+			Name:          comment.User.Name,
+			FollowCount:   comment.User.FollowCount,
+			FollowerCount: comment.User.FollowerCount,
+			IsFollow:      isFollow(comment.User.Id),
+		}
+		commentResp := CommentResp{
+			Id:         comment.Id,
+			Content:    comment.Content,
+			CreateDate: time.Unix(comment.CreateTime, 0).Format("2006-01-02 03:04:05 PM"),
+			User:       userResp,
+		}
+		resp = append(resp, commentResp)
 	}
-	publisher, err := getPublisherByVideoId(videoId)
-	if err != nil {
-		return CommentResp{}, err
-	}
-	err = db.MySQL.Debug().Model(&model.Comment{}).Create(&comment).Error
-	if err != nil {
-		return CommentResp{}, err
-	}
-	return generateResp(comment, publisher), nil
-}
 
-// Delete 删除评论
-func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (CommentResp, error) {
-	var comment model.Comment
-	err := db.MySQL.Debug().Model(&model.Comment{}).First(&comment, commentId).Error
-	if err != nil {
-		return CommentResp{}, err
-	}
-	if comment.UserId != userId {
-		return CommentResp{}, ErrPermit
-	}
-	publisher, err := getPublisherByVideoId(videoId)
-	if err != nil {
-		return CommentResp{}, err
-	}
-	db.MySQL.Debug().Delete(&model.Comment{}, commentId)
-	return generateResp(comment, publisher), nil
+	return resp
 }

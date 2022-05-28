@@ -22,7 +22,7 @@ func (n namespace) Error(msg string, args ...zap.Field) {
 func (n namespace) Info(msg string, args ...zap.Field) {
 	if args != nil {
 		a := make([]zap.Field, 0, len(args)+1)
-		a = append(a, zap.Namespace((*(*string)(unsafe.Pointer(&n)))))
+		a = append(a, zap.Namespace(*(*string)(unsafe.Pointer(&n))))
 		a = append(a, args...)
 		logger.Info(msg, a...)
 	}

@@ -15,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+var userLogger = log.Namespace("UserService")
+
 type User struct{}
 type UserLoginReq struct {
 	Username string `form:"username"`
@@ -28,7 +30,7 @@ type UserLoginResp struct {
 
 type UserRegisterReq struct {
 	Username string `form:"username" binding:"required,min=1,max=32"`
-	Password string `form:"password" binding:"required,min=6,max=32"`
+	Password string `form:"password" binding:"required,min=5,max=32"`
 }
 
 type UserRegisterResp struct {
@@ -40,28 +42,28 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	var req UserLoginReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		log.Logger.Error("parse json error")
+		userLogger.Error("parse json error")
 		return nil, err
 	}
 	var user model.User
 	var count int64
 	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ? and password = ?", req.Username, req.Password).Select("id").First(&user).Count(&count).Error
 	if err != nil {
-		log.Logger.Error("mysql happen error")
+		userLogger.Error("mysql happen error")
 		return nil, err
 	}
 	if count != 1 {
-		log.Logger.Error("no user or user repeat")
+		userLogger.Error("no user or user repeat")
 		return nil, err
 	}
 	token, err := util.CreateAccessToken(user.Id)
 	if err != nil {
-		log.Logger.Error("create access token error")
+		userLogger.Error("create access token error")
 		return nil, err
 	}
 	refreshToken, err := util.CreateRefreshToken(user.Id)
 	if err != nil {
-		log.Logger.Error("create refresh token error")
+		userLogger.Error("create refresh token error")
 		return nil, err
 	}
 	c.Header("token", token)
@@ -79,8 +81,8 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	var req UserRegisterReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		log.Logger.Error("parse json error")
-		log.Logger.Error("validate err", zap.Error(err))
+		userLogger.Error("parse json error")
+		userLogger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
 
@@ -91,7 +93,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	var count int64
 	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ?", req.Username).Select("id").Count(&count).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		log.Logger.Error("mysql happen error")
+		userLogger.Error("mysql happen error")
 		return nil, err
 	}
 	if count != 0 {
@@ -106,7 +108,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	db.MySQL.Debug().Create(&user)
 	token, err := util.CreateAccessToken(user.Id)
 	if err != nil {
-		log.Logger.Error("create access token error")
+		userLogger.Error("create access token error")
 		return nil, err
 	}
 	return UserRegisterResp{
@@ -124,7 +126,7 @@ func (u User) Info(myUserID, targetUserID int64) (UserDemo, error) {
 	// 查询用户信息
 	err := db.MySQL.Debug().Model(&model.User{}).Where("id = ?", targetUserID).First(&userInTable).Error
 	if err != nil {
-		log.Logger.Error("mysql happen error")
+		userLogger.Error("mysql happen error")
 		return UserDemo{}, err
 	}
 
@@ -140,7 +142,7 @@ func (u User) Info(myUserID, targetUserID int64) (UserDemo, error) {
 	}
 	err = db.MySQL.Debug().Model(&model.Follow{}).Where("follow_id = ? and user_id = ?", myUserID, targetUserID).Count(&followCount).Error
 	if err != nil {
-		log.Logger.Error("mysql happen error")
+		userLogger.Error("mysql happen error")
 		return UserDemo{}, err
 	}
 

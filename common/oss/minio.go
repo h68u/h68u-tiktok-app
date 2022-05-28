@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var logger = log.Namespace("minio")
+
 func MinioInit() {
 	var err error
 	Client, err = minio.New(config.MinioCfg.Endpoint, config.MinioCfg.AccessKeyID, config.MinioCfg.SecretAccessKey, false)
@@ -29,9 +31,9 @@ func CreateMinoBucket(bucketName string) {
 		// 检查存储桶是否已经存在。
 		exists, err := Client.BucketExists(bucketName)
 		if err == nil && exists {
-			log.Logger.Error(fmt.Sprintf("We already own %s\n", bucketName))
+			logger.Info(fmt.Sprintf("We already own %s\n", bucketName))
 		} else {
-			log.Logger.Error("create bucket error")
+			logger.Error("create bucket error")
 			return
 		}
 	}
@@ -39,20 +41,20 @@ func CreateMinoBucket(bucketName string) {
 	err = Client.SetBucketPolicy(bucketName, policy.BucketPolicyReadWrite)
 
 	if err != nil {
-		log.Logger.Error("set bucket policy error")
+		logger.Error("set bucket policy error")
 		return
 	}
-	log.Logger.Info(fmt.Sprintf("Successfully created %s\n", bucketName))
+	logger.Info(fmt.Sprintf("Successfully created %s\n", bucketName))
 }
 
 // UploadVideo 上传文件给minio指定的桶中
 func UploadVideo(bucketName, objectName string, reader io.Reader, objectSize int64) (ok bool) {
 	n, err := Client.PutObject(bucketName, objectName, reader, objectSize, minio.PutObjectOptions{ContentType: "video/mp4"})
 	if err != nil {
-		log.Logger.Error("uploadFile error")
+		logger.Error("uploadFile error")
 		return false
 	}
-	log.Logger.Info(fmt.Sprintf("Successfully uploaded bytes: %v", n))
+	logger.Info(fmt.Sprintf("Successfully uploaded bytes: %v", n))
 	return true
 }
 

@@ -1,7 +1,6 @@
 package ctrl
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
@@ -10,7 +9,7 @@ import (
 	srv "tikapp/service"
 )
 
-type CommentReq struct {
+type CommentActionReq struct {
 	UserId      int64  `form:"user_id"`
 	VideoId     int64  `form:"video_id"`
 	ActionId    byte   `form:"action_type" `
@@ -18,13 +17,17 @@ type CommentReq struct {
 	CommentText string `form:"comment_text" `
 }
 
+type CommentListReq struct {
+	VideoId int64 `form:"video_id"`
+}
+
+var comm srv.Comment
+
 // CommentAction 执行评论
 // todo 错误处理有点繁琐, 之后加个中间件处理
 func CommentAction(c *gin.Context) {
-	userId, _ := c.Get("UserId")
-	fmt.Println(userId)
-	var comm srv.Comment
-	var req CommentReq
+	// _, _ = c.Get("UserId")
+	var req CommentActionReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		log.Logger.Error("parse json error")
@@ -91,5 +94,18 @@ func CommentAction(c *gin.Context) {
 
 // CommentList 查看视频所以评论 按发布时间倒序
 func CommentList(c *gin.Context) {
-
+	var req CommentListReq
+	err := c.ShouldBindWith(&req, binding.Query)
+	if err != nil {
+		log.Logger.Error("parse json error")
+		res.Error(c, res.Status{
+			StatusCode: res.ServerErrorStatus.StatusCode,
+			StatusMsg:  res.ServerErrorStatus.StatusMsg,
+		})
+		return
+	}
+	comments, err := comm.List(req.VideoId)
+	res.Success(c, res.R{
+		"comment_list": comments,
+	})
 }

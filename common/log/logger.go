@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// logger 整个项目的Logger
+// Logger 整个项目的Logger
 var Logger *zap.Logger
 
 func Init() {

@@ -29,7 +29,7 @@ func CreateMinoBucket(bucketName string) {
 		// 检查存储桶是否已经存在。
 		exists, err := Client.BucketExists(bucketName)
 		if err == nil && exists {
-			log.Logger.Error(fmt.Sprintf("We already own %s\n", bucketName))
+			log.Logger.Info(fmt.Sprintf("We already own %s\n", bucketName))
 		} else {
 			log.Logger.Error("create bucket error")
 			return

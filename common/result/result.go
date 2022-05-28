@@ -60,6 +60,13 @@ func Success(c *gin.Context, r R) {
 	}
 	c.JSON(http.StatusOK, h)
 }
+func Success1(c *gin.Context) {
+	h := gin.H{
+		"status_code": 0,
+		"status_msg":  "success",
+	}
+	c.JSON(http.StatusOK, h)
+}
 
 func Error(c *gin.Context, status Status) {
 	c.JSON(http.StatusOK, gin.H{

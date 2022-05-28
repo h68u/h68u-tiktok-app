@@ -25,6 +25,6 @@ func UpdateRedis(){
 }
 
 //更新DB
-func UpdateMysql{
+func UpdateMysql(){
 
 }

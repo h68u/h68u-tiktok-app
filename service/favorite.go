@@ -5,27 +5,38 @@ import (
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
-	"tikapp/util/stringconnect"
+	"tikapp/util"
 	"time"
 
 )
 
-type Favorite struct{}
-
-//需要加并行
-
-/* type FavoriteReq struct {
-	UserId      int64    `json:"user_id"`
-	Token       string   `json:"token` 
-	VideoId     int64    `json:"video_id`
-	Actiontype  int64    `json:"action_type"`
-} */
+type VideoFavorite struct{}
 
 
 
-//后续设置context？
+type VideoDemo struct {
+	Id            int64    `json:"id"`
+	Author        UserDemo `json:"author"`
+	PlayUrl       string   `json:"play_url"`
+	CoverUrl      string   `json:"cover_url"`
+	FavoriteCount int64    `json:"favorite_count"`
+	CommentCount  int64    `json:"comment_count"`
+	IsFavorite    bool     `json:"is_favorite"`
+	Title         string   `json:"title"`
+}
+
+type UserDemo struct {
+	Id            int64  `json:"id"`
+	Name          string `json:"name"`
+	FollowCount   int64  `json:"follow_count"`
+	FollowerCount int64  `json:"follower_count"`
+	IsFollow      bool   `json:"is_follow"`
+}
+
+
+//后续设置context？需要加并行?
 //点赞操作
-func (favor *Favorite) SetFavor(videoId int64,userId int64) (error){
+func (favorite *VideoFavorite) SetFavor(videoId int64,userId int64) (error){
     redis := db.Redis
 	defer redis.Close()
     //写入[videoID::useID]{create time}
@@ -41,7 +52,7 @@ func (favor *Favorite) SetFavor(videoId int64,userId int64) (error){
 }
 
 //取消赞
-func (favor *Favorite)RemoveFavor(videoId int64,userId int64)(error){
+func (favorite *VideoFavorite)RemoveFavor(videoId int64,userId int64)(error){
 	redis := db.Redis
 	defer redis.Close()
 	_,err := redis.hdel("UserLikeVideo",stringconnect(videoId,userId))
@@ -61,10 +72,38 @@ func (favor *Favorite)RemoveFavor(videoId int64,userId int64)(error){
 }
 
 //获取点赞列表
-func (favor *Favorite)FavorList(userId int64){
-	
+func (favorite *Favorite)FavorList(userId int64)([]FavorListResp,error) {
+	var favors []model.VideoFavorite
+	result := db.MySQL.Debug().Where("user_id = ?", userId).Preload("User";"Video").Order("CreateTime desc").Find(&favors)
+	resp := UpdateListResp(favors)
+	return resp,nil
 
 
+}
+
+func UpdateListResp(favors []model.VideoFavorite) ([]FavorListResp){
+	resp :=make([]FavorListResp,0,len(favors))
+	for _, favor := range favors {
+		UserDemo := UserResp{
+			Id:			   favor.UserId,
+			Name:		   favor.User.Name,
+			FollowCount:   favor.User.FollowCount,
+			FollowerCount: favor.User.FollowerCount,
+			IsFollow:      isFollow(favor.User.Id),    //未完成是否关注
+		}
+		VideoDemo := VideoDemo{
+		Id            	favor.VideoId,
+		Author       	favor.UserDemo,
+		PlayUrl       	favor.Video.PlayUrl,
+		CoverUrl      	favor.Video.CoverUrl,
+		FavoriteCount 	favor.Video.FavoriteCount,
+		CommentCount    favor.Video.CommentCount,
+		IsFavorite      favor.Video.CreateTime,
+		Title           favor.Video.Title,
+		}
+		resp = append(resp,VideoDemo)		
+	}
+	return resp
 }
 
 //定时更新redis和mysql

@@ -2,9 +2,11 @@ package oss
 
 import (
 	"fmt"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"mime/multipart"
 	"tikapp/common/config"
+	"tikapp/common/log"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
 func AliyunInit() {
@@ -21,13 +23,13 @@ func CreateBucket(name string) {
 	if err != nil {
 		exist, err := AliyunClient.IsBucketExist(name)
 		if err == nil && exist {
-			logger.Info(fmt.Sprintf("We already own %s\n", name))
+			log.Logger.Info(fmt.Sprintf("We already own %s\n", name))
 		} else {
-			logger.Error("create bucket error")
+			log.Logger.Error("create bucket error")
 			return
 		}
 	}
-	logger.Info(fmt.Sprintf("Successfully created %s\n", name))
+	log.Logger.Info(fmt.Sprintf("Successfully created %s\n", name))
 }
 
 func UploadVideoToOss(bucketName string, objectName string, reader multipart.File) (bool, error) {

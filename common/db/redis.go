@@ -19,3 +19,12 @@ func RedisInit() {
 	}
 	logrus.Info("Connect redis succeeded")
 }
+//更新redis
+func UpdateRedis(){
+
+}
+
+//更新DB
+func UpdateMysql{
+
+}

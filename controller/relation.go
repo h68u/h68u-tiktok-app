@@ -39,7 +39,39 @@ func RelationAction(c *gin.Context) {
 
 // FollowList 获取用户关注的列表
 func FollowList(c *gin.Context) {
+	var req srv.UserFollowerReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		res.Error(c, res.QueryParamErrorStatus)
+		return
+	}
 
+	if req.Token == "" {
+		res.Error(c, res.PermissionErrorStatus)
+		return
+	}
+
+	var resp srv.UserFollowerResp
+	if resp, err = srv.FollowList(&req); err != nil {
+		res.Error(c, res.Status{
+			StatusCode: res.FollowListErrorStatus.StatusCode,
+			StatusMsg:  res.FollowListErrorStatus.StatusMsg,
+		})
+		return
+	}
+	
+	// resp := make(srv.UserFollowerResp, 0, len(resp0))
+	// for i := 0; i < len(resp); i++ {
+	// 	resp[i].Id = resp0[i].Id
+	// 	resp[i].Name = resp0[i].Name
+	// 	resp[i].FollowCount = resp0[i].FollowCount
+	// 	resp[i].FollowerCount = resp0[i].FollowerCount
+	// 	resp[i].IsFollow = true
+	// }
+
+	res.Success(c, res.R{
+		"user_list": resp,
+	})
 }
 
 // FollowerList 获取用户的粉丝列表

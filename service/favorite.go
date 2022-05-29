@@ -40,7 +40,7 @@ func (favorite *VideoFavorite) SetFavor(videoId int64,userId int64) (error){
     redis := db.Redis
 	defer redis.Close()
     //写入[videoID::useID]{create time}
-	res,err:=redis.HSet("UserLikeVideo",stringconnect(videoId,userId),time.Now().Unix())
+	res,err:=redis.HSet("UserLikeVideo",util.connect(videoId,userId),time.Now().Unix())
 	if err != nil{
 
 	}

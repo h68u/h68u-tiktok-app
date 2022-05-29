@@ -13,3 +13,4 @@ func connect(str1 int64,str2 int64)(string){
 
 }
 
+func separatesplite

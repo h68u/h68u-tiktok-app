@@ -26,6 +26,7 @@ var (
 	VideoNotExitErrorStatus   = newStatus(412, "video not found")
 	FollowErrorStatus         = newStatus(413, "follow error")
 	FavoriteErrorStatus       = newStatus(414, "favorite error")
+	FollowListErrorStatus     = newStatus(415, "get follow list failed")
 
 	ServerErrorStatus = newStatus(500, "server error")
 )

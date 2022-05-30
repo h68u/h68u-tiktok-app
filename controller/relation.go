@@ -6,13 +6,15 @@ import (
 	srv "tikapp/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
+
+var r srv.Relation
 
 // RelationAction 关注或取消关注
 func RelationAction(c *gin.Context) {
-	var r srv.Relation
 	var req srv.RelationFollow
-	err := c.ShouldBind(&req)
+	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		log.Logger.Error("check params error")
 		res.Error(c, res.QueryParamErrorStatus)
@@ -40,7 +42,7 @@ func RelationAction(c *gin.Context) {
 // FollowList 获取用户关注的列表
 func FollowList(c *gin.Context) {
 	var req srv.UserFollowerReq
-	err := c.ShouldBind(&req)
+	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		res.Error(c, res.QueryParamErrorStatus)
 		return
@@ -52,7 +54,7 @@ func FollowList(c *gin.Context) {
 	}
 
 	var resp srv.UserFollowerResp
-	if resp, err = srv.FollowList(&req); err != nil {
+	if resp, err = r.FollowList(&req); err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.FollowListErrorStatus.StatusCode,
 			StatusMsg:  res.FollowListErrorStatus.StatusMsg,

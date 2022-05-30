@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func connect(str1 int64,str2 int64)(string){
+func Connect(str1 int64,str2 int64)(string){
 	var str strings.Builder
 	str.WriteString(string(str1))
 	str.WriteString("::")
@@ -13,4 +13,6 @@ func connect(str1 int64,str2 int64)(string){
 
 }
 
-func separatesplite
+func Separate(){
+	
+}

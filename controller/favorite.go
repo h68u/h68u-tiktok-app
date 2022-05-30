@@ -32,7 +32,7 @@ func FavoriteAction(c *gin.Context) {
 		})
 		return
 	}
-	
+	//鉴权？
 	// 请求参数错误
 	if req.ActionId != 0 && req.ActionId != 1 {
 		res.Error(c, res.Status{
@@ -47,13 +47,13 @@ func FavoriteAction(c *gin.Context) {
 		//点赞
 		resp, err := favorite.SetFavor(req.VideoId,req.UserId)
 		if err != nil{
-			
-			return
+			return 
 		}
 	case 0:
+		//取消赞
 		resp,err = favorite.RemoveFavor(req.VideoId,req.UserId)
 		if err != nil{
-
+			return
 		}
 		
 	}

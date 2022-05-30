@@ -15,7 +15,7 @@ type RelationFollow struct {
 	UserId     int64  `form:"user_id" binding:"required"`
 	Token      string `form:"token" binding:"required"`
 	ToUserId   int64  `form:"to_user_id" binding:"required"`
-	ActionType int8   `form:"action_type" binding:"required"`
+	ActionType int32  `form:"action_type" binding:"required"`
 }
 
 const (

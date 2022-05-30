@@ -3,6 +3,7 @@ package ctrl
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"tikapp/common/log"
 	srv "tikapp/service"
 	res "tikapp/common/result"
 )
@@ -16,7 +17,7 @@ type FavoriteActionReq struct{
 
 type FavoriteListReq struct{
 	UserId		int64		`form:"user_id"`
-	Token 		token       `form:"token"`
+	Token 		string       `form:"token"`
 }
 
 var favorite srv.VideoFavorite
@@ -45,14 +46,16 @@ func FavoriteAction(c *gin.Context) {
 	switch req.ActionId{
 	case 1:
 		//点赞
-		resp, err := favorite.SetFavor(req.VideoId,req.UserId)
+		 err := favorite.SetFavor(req.VideoId,req.UserId)
 		if err != nil{
+
 			return 
 		}
 	case 0:
 		//取消赞
-		resp,err = favorite.RemoveFavor(req.VideoId,req.UserId)
+		err = favorite.RemoveFavor(req.VideoId,req.UserId)
 		if err != nil{
+
 			return
 		}
 		

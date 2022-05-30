@@ -1,6 +1,7 @@
 package srv
 
 import (
+<<<<<<< HEAD
 	"errors"
 	"tikapp/common/db"
 	"tikapp/common/log"
@@ -107,7 +108,7 @@ func UpdateListResp(favors []model.VideoFavorite) ([]FavorListResp){
 		CoverUrl      	favor.Video.CoverUrl,
 		FavoriteCount 	favor.Video.FavoriteCount,
 		CommentCount    favor.Video.CommentCount,
-		IsFavorite      IsFavorite(favor.VideoId, favor.UserId)
+		IsFavorite      IsFavorite(favor.UserId, favor.VideoId)
 		Title           favor.Video.Title,
 		}
 		resp = append(resp,VideoDemo)		
@@ -116,12 +117,20 @@ func UpdateListResp(favors []model.VideoFavorite) ([]FavorListResp){
 }
 
 //判断是否点赞
-func IsFavorite(videoId int64,userId int64)(bool,error)  {
+func IsFavorite(userId int64, videoId int64)(bool,error)  {
 	defer redis.Close()
 	is ,err := db.redis.hexists("UserLikeVideo",util.Connect(videoId,userId))
 	if err != nil{
 		log.Logger.Error("isfavorite can not be known ")
-		return nil , err
+		var count int64
+		err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Count(&count).Error
+		if err != nil {
+			log.Logger.Error("mysql happen error when check favorite")
+			return false, err
+		}
+		if count == 1 {
+			return true, nil
+		}
 	}
 	return is,nil
 }

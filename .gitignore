@@ -19,6 +19,7 @@
 
 app.yaml
 
+bin/
 logs/
 
 test/

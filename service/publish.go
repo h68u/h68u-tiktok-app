@@ -2,6 +2,7 @@ package srv
 
 import (
 	"errors"
+	"github.com/sirupsen/logrus"
 	"mime/multipart"
 	"tikapp/common/db"
 	"tikapp/common/model"
@@ -47,6 +48,38 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 	return nil
 }
 
-//func (v Video) PublishList(myUserID, targetUserID int64) ([]VideoDemo, error) {
-//
-//}
+func (v Video) PublishList(myUserID, targetUserID int64) ([]VideoDemo, error) {
+	var videos []VideoDemo
+	var videoInTable []model.Video
+	err := db.MySQL.Model(&model.Video{}).Where("publish_id = ?", targetUserID).Find(&videoInTable).Error
+	if err != nil {
+		logrus.Error("mysql happen error when find video in table", err)
+		return nil, err
+	}
+
+	for _, v := range videoInTable { //将表中的信息填到videos中，并补充其他信息
+		var video VideoDemo
+		video.Id = v.Id
+		video.Title = v.Title
+		video.PlayUrl = v.PlayUrl
+		video.CoverUrl = v.CoverUrl
+		video.FavoriteCount = v.FavoriteCount
+		video.CommentCount = v.CommentCount
+		//video.CreateTime = v.CreateTime 返回体中没有create_time字段
+		//video.PublishId = v.PublishId 返回体中没有publish_id字段
+		video.IsFavorite, err = IsFavorite(myUserID, v.Id)
+		if err != nil {
+			logrus.Error("mysql happen error when query favorite")
+			return nil, err
+		}
+		u := User{}
+		video.Author, err = u.Info(myUserID, targetUserID)
+		if err != nil {
+			logrus.Error("mysql happen error when query user info")
+			return nil, err
+		}
+		videos = append(videos, video)
+	}
+
+	return videos, nil
+}

@@ -11,6 +11,8 @@ func handle(r *gin.Engine) {
 	// TODO: 或许可以在这加一个全局处理 err 的 handler
 	// r.Any("/", ctrl.ErrorHanler)
 
+	r.Any("/log", ctrl.LogToWeb)
+
 	// 鉴权
 	r.Use(middlewire.Auth())
 

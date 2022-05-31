@@ -3,6 +3,7 @@ package srv
 import (
 	"errors"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"strings"
 	"tikapp/common/db"
@@ -44,14 +45,19 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 	var user model.User
-	var count int64
-	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ? and password = ?", req.Username, req.Password).Select("id").First(&user).Count(&count).Error
+	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ?", req.Username).First(&user).Error
 	if err != nil {
 		log.Logger.Error("mysql happen error")
 		return nil, err
 	}
-	if count != 1 {
-		log.Logger.Error("no user or user repeat")
+	// 走不到这？
+	//if count != 1 {
+	//	log.Logger.Error("no user", zap.Any("count", count))
+	//	return nil, err
+	//}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		log.Logger.Error("password error", zap.Any("user", user))
 		return nil, err
 	}
 	token, err := util.CreateAccessToken(user.Id)
@@ -83,7 +89,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 		log.Logger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
-
+	// TODO： 这条已经不会运行到，返回的"status_msg"现在都是"register happen error"?
 	if len(strings.TrimSpace(req.Username)) == 0 || len(strings.TrimSpace(req.Password)) == 0 {
 		return nil, ErrEmpty
 	}
@@ -97,10 +103,11 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	if count != 0 {
 		return nil, ErrUsernameExits
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	user := model.User{
 		Name:     req.Username,
 		Username: req.Username,
-		Password: req.Password,
+		Password: string(hash),
 	}
 
 	db.MySQL.Debug().Create(&user)

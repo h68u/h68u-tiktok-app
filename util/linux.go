@@ -41,7 +41,7 @@ func ExecuteCmd(command string, c *gin.Context) (string, error) {
 	}()
 	var res string
 	for line := range ch {
-		res += line
+		res += line + "\n"
 	}
 	return res, nil
 }

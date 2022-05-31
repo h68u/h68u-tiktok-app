@@ -14,7 +14,7 @@ var r srv.Relation
 // RelationAction 关注或取消关注
 func RelationAction(c *gin.Context) {
 	var req srv.RelationFollow
-	err := c.ShouldBindWith(&req, binding.Query)
+	err := c.ShouldBindWith(&req, binding.JSON)
 	if err != nil {
 		log.Logger.Error("check params error")
 		res.Error(c, res.QueryParamErrorStatus)

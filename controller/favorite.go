@@ -79,8 +79,8 @@ func FavoriteList(c *gin.Context) {
 		})
 		return
 	}
-	favorlist, err := comm.List(req.UserId)
+	favorlist, err := favorite.FavorList(req.UserId)
 	res.Success(c, res.R{
-		"VideoDemo": favorlist,
+		"video_list": favorlist,
 	})
 }

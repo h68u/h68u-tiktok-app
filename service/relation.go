@@ -15,7 +15,7 @@ type RelationFollow struct {
 	UserId     int64  `form:"user_id" binding:"required"`
 	Token      string `form:"token" binding:"required"`
 	ToUserId   int64  `form:"to_user_id" binding:"required"`
-	ActionType int8   `form:"action_type" binding:"required"`
+	ActionType int32  `form:"action_type" binding:"required"`
 }
 
 const (
@@ -126,7 +126,7 @@ type UserFollowerResp = []UserFollowerItem
 const sqlUserFollower = `select u.id, u.name, u.follow_count, u.follower_count from user as u, follow as f where f.follow_id = ? and f.user_id = u.id;`
 
 // FollowList 获取给定用户的关注列表
-func FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
+func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 	var uResp UserFollowerResp
 
 	rows, err := db.MySQL.Debug().Raw(sqlUserFollower, u.UserId).Rows()

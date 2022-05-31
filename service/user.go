@@ -50,27 +50,25 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 		log.Logger.Error("mysql happen error")
 		return nil, err
 	}
-	// 走不到这？
-	//if count != 1 {
-	//	log.Logger.Error("no user", zap.Any("count", count))
-	//	return nil, err
-	//}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		log.Logger.Error("password error", zap.Any("user", user))
 		return nil, err
 	}
+	// 2h
 	token, err := util.CreateAccessToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create access token error")
 		return nil, err
 	}
+	// 30d
 	refreshToken, err := util.CreateRefreshToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create refresh token error")
 		return nil, err
 	}
 	c.Header("token", token)
+	// key: 2h token; value 30d token; key live time: 30d
 	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
 	return UserLoginResp{
 		UserId: user.Id,

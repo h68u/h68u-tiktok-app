@@ -12,10 +12,10 @@ import (
 type Relation struct{}
 
 type RelationFollow struct {
-	UserId     int64  
-	Token      string 
-	ToUserId   int64  
-	ActionType int32  
+	UserId     int64
+	Token      string
+	ToUserId   int64
+	ActionType int32
 }
 
 const (

@@ -75,7 +75,9 @@ func (f Feed) Feed(id int64, lastTime int64) (interface{}, error) {
 			isFollow = false
 		} else {
 			var count int64
-			err := db.MySQL.Model(&model.Follow{}).Where("user_id = ? and follow_id = ?", authorId, id).Count(&count).Error
+			err := db.MySQL.Model(&model.Follow{}).
+				Where("user_id = ? and follow_id = ?", authorId, id).
+				Count(&count).Error
 			if err != nil {
 				return nil, err
 			}

@@ -89,7 +89,7 @@ func Auth() gin.HandlerFunc {
 			}
 
 			// refresh token 没过期
-			userId, err1 := util.GetUsernameFormToken(refreshToken)
+			userId, err1 := util.GetUserIDFormToken(refreshToken)
 			if err1 != nil {
 				log.Logger.Error("parse token error")
 				//token解析不了的情况一般很少,暂时panic一下
@@ -141,7 +141,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		//未过期
-		userId, err := util.GetUsernameFormToken(token)
+		userId, err := util.GetUserIDFormToken(token)
 		if err != nil {
 			panic(err)
 		}

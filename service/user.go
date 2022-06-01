@@ -133,13 +133,15 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	// key: 2h token; value 30d token; key live time: 30d
 	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
 
-	return UserLoginResp{
+	return UserRegisterResp{
 		UserId: user.Id,
 		Token:  token,
 	}, nil
 }
 
 // Info 依靠用户 ID 查询用户信息，因为还要返回是否关注，所以还要传入当前的用户 ID
+// myUserId: get from token; 为0表示请求为传入token
+// targetUserId: get from url
 func (u User) Info(myUserID, targetUserID int64) (UserDemo, error) {
 	var userInTable model.User //返回的格式和表中格式不一样
 	var user UserDemo

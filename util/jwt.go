@@ -44,8 +44,10 @@ func CreateRefreshToken(userId int64) (string, error) {
 	return token, err
 }
 
-//ParseToken 验证用户token
-func GetUsernameFormToken(token string) (int64, error) {
+// GetUserIDFormToken ParseToken 验证用户token
+// id int64: 用户id 如果没有解析出，默认为-1
+// err error: 错误
+func GetUserIDFormToken(token string) (int64, error) {
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
@@ -57,7 +59,9 @@ func GetUsernameFormToken(token string) (int64, error) {
 	return -1, err
 }
 
-//校验token是否过期
+// ValidToken 校验token是否过期
+// bool: 是否过期 default: true
+// error: 解析是否成功 default: nil
 func ValidToken(token string) (bool, error) {
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil

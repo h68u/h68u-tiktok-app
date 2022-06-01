@@ -14,6 +14,19 @@ import (
 var Logger *zap.Logger
 
 func Init() {
+	if config.AppCfg.RunMode == "debug" {
+		// 开发模式 日志输出到终端
+		core := zapcore.NewTee(
+			zapcore.NewCore(getEncoder(),
+				zapcore.Lock(os.Stdout), zapcore.DebugLevel),
+		)
+		Logger = zap.New(core, zap.AddCaller())
+	} else {
+		fileLog()
+	}
+}
+
+func fileLog() {
 	// 调试级别
 	debugPriority := zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
 		return lev == zap.DebugLevel

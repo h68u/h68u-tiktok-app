@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"strings"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
@@ -39,6 +38,8 @@ type UserRegisterResp struct {
 
 func (u User) Login(c *gin.Context) (interface{}, error) {
 	var req UserLoginReq
+
+	// 解析参数
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		log.Logger.Error("parse json error")
@@ -50,28 +51,33 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 		log.Logger.Error("mysql happen error")
 		return nil, err
 	}
-	// 走不到这？
-	//if count != 1 {
-	//	log.Logger.Error("no user", zap.Any("count", count))
-	//	return nil, err
-	//}
+
+	// 密码校验
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		log.Logger.Error("password error", zap.Any("user", user))
 		return nil, err
 	}
+
+	// acc token: 2h
 	token, err := util.CreateAccessToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create access token error")
 		return nil, err
 	}
+
+	// ref token 30d
 	refreshToken, err := util.CreateRefreshToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create refresh token error")
 		return nil, err
 	}
-	c.Header("token", token)
+
+	//c.Header("token", token) // 不需要了
+
+	// key: 2h token; value 30d token; key live time: 30d
 	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+
 	return UserLoginResp{
 		UserId: user.Id,
 		Token:  token,
@@ -85,15 +91,11 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	var req UserRegisterReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
-		log.Logger.Error("parse json error")
 		log.Logger.Error("validate err", zap.Error(err))
 		return nil, err
 	}
-	// TODO： 这条已经不会运行到，返回的"status_msg"现在都是"register happen error"?
-	if len(strings.TrimSpace(req.Username)) == 0 || len(strings.TrimSpace(req.Password)) == 0 {
-		return nil, ErrEmpty
-	}
 
+	// 检查是否注册过
 	var count int64
 	err = db.MySQL.Debug().Model(&model.User{}).Where("username = ?", req.Username).Select("id").Count(&count).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -103,6 +105,8 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	if count != 0 {
 		return nil, ErrUsernameExits
 	}
+
+	// 加密
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	user := model.User{
 		Name:     req.Username,
@@ -111,11 +115,24 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	}
 
 	db.MySQL.Debug().Create(&user)
+
+	// acc token: 2h
 	token, err := util.CreateAccessToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create access token error")
 		return nil, err
 	}
+
+	// ref token 30d
+	refreshToken, err := util.CreateRefreshToken(user.Id)
+	if err != nil {
+		log.Logger.Error("create refresh token error")
+		return nil, err
+	}
+
+	// key: 2h token; value 30d token; key live time: 30d
+	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+
 	return UserRegisterResp{
 		UserId: user.Id,
 		Token:  token,
@@ -123,6 +140,8 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 }
 
 // Info 依靠用户 ID 查询用户信息，因为还要返回是否关注，所以还要传入当前的用户 ID
+// myUserId: get from token; 为0表示请求为传入token
+// targetUserId: get from url
 func (u User) Info(myUserID, targetUserID int64) (UserDemo, error) {
 	var userInTable model.User //返回的格式和表中格式不一样
 	var user UserDemo

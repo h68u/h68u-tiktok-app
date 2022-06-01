@@ -42,7 +42,6 @@ func Register(c *gin.Context) {
 // Info 获取用户信息
 func Info(c *gin.Context) {
 	var u srv.User
-	//var isFollow bool
 	var myUserID int64
 	var err error
 	targetUserID, _ := strconv.Atoi(c.Query("user_id"))

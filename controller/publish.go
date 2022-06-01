@@ -50,7 +50,7 @@ func PublishList(c *gin.Context) {
 
 	token := c.Query("token")
 	if token != "" {
-		myUserID, err = util.GetUsernameFormToken(token)
+		myUserID, err = util.GetUserIDFormToken(token)
 	}
 
 	targetUserID, _ = strconv.Atoi(c.Query("user_id"))

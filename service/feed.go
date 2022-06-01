@@ -33,7 +33,7 @@ type UserDemo struct {
 
 // Feed 获取视频列表
 // id 若为-1，表示没有获取到用户id
-// latestTime 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
+// nextTime 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
 func (f Feed) Feed(id int64) (interface{}, error) {
 	// 目前：取出最新视频
 	// TODO：控制视频数量
@@ -43,7 +43,7 @@ func (f Feed) Feed(id int64) (interface{}, error) {
 		return nil, err
 	}
 
-	var latestTime int64 = 0
+	var nextTime int64 = 0
 	videoDemos := make([]VideoDemo, 0)
 	for _, v := range videos {
 		// 获取作者信息
@@ -107,13 +107,13 @@ func (f Feed) Feed(id int64) (interface{}, error) {
 			IsFavorite:    isFavorite,
 			Title:         v.Title,
 		})
-		if latestTime < v.CreateTime {
-			latestTime = v.CreateTime
+		if nextTime < v.CreateTime {
+			nextTime = v.CreateTime
 		}
 	}
 
 	resp := FeedResp{
-		NextTime:  latestTime,
+		NextTime:  nextTime,
 		VideoList: videoDemos,
 	}
 	return resp, nil

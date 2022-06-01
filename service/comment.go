@@ -2,7 +2,6 @@ package srv
 
 import (
 	"errors"
-	"fmt"
 	"tikapp/common/db"
 	"tikapp/common/model"
 	"time"
@@ -39,49 +38,75 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 	if err != nil {
 		return CommentResp{}, err
 	}
-	err = db.MySQL.Debug().Model(&model.Comment{}).Create(&comment).Error
-	if err != nil {
+	tx := db.MySQL.Begin()
+	if err = tx.Debug().
+		Model(&model.Comment{}).
+		Create(&comment).
+		Error; err != nil {
+		tx.Rollback()
 		return CommentResp{}, err
 	}
+	tx.Commit()
 	return genCommentResp(comment, publisher), nil
 }
 
 // Delete 删除评论
 func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (CommentResp, error) {
+	// 从数据库中找到要删除的评论
 	var comment model.Comment
-	err := db.MySQL.Debug().Model(&model.Comment{}).First(&comment, commentId).Error
-	if err != nil {
+	if err := db.MySQL.Debug().
+		Model(&model.Comment{}).
+		First(&comment, commentId).
+		Error; err != nil {
 		return CommentResp{}, err
 	}
+	// 验证执行删除操作的当前用户是否是该评论的发布者
 	if comment.UserId != userId {
 		return CommentResp{}, ErrPermit
 	}
+	// 获取这条评论所属视频id,用于之后查询视频信息
 	publisher, err := getPublisherByVideoId(videoId)
 	if err != nil {
 		return CommentResp{}, err
 	}
-	db.MySQL.Debug().Delete(&model.Comment{}, commentId)
+	tx := db.MySQL.Begin()
+	if err = tx.Debug().
+		Delete(&model.Comment{}, commentId).
+		Error; err != nil {
+		tx.Rollback()
+		return CommentResp{}, err
+	}
+	tx.Commit()
 	return genCommentResp(comment, publisher), nil
 }
 
 func (comm *Comment) List(videoId int64) ([]CommentResp, error) {
 	var comments []model.Comment
-	result := db.MySQL.Debug().Where("video_id = ?", videoId).Preload("User").Order("create_time desc").Find(&comments)
+	if err := db.MySQL.Debug().
+		Where("video_id = ?", videoId).
+		Preload("User").
+		Order("create_time desc").
+		Find(&comments).Error; err != nil {
+		return nil, err
+	}
 	resp := genCommentListResp(comments)
-	fmt.Println(result)
 	return resp, nil
 }
 
 // 根据 videoId 获得视频发布者 user
 func getPublisherByVideoId(videoId int64) (model.User, error) {
 	var video model.Video
-	err := db.MySQL.Debug().Model(&model.Video{}).First(&video, videoId).Error
-	if err != nil {
+	if err := db.MySQL.Debug().
+		Model(&model.Video{}).
+		First(&video, videoId).
+		Error; err != nil {
 		return model.User{}, err
 	}
 	var user model.User
-	err = db.MySQL.Debug().Model(&model.User{}).First(&user, video.PublishId).Error
-	if err != nil {
+	if err := db.MySQL.Debug().
+		Model(&model.User{}).
+		First(&user, video.PublishId).
+		Error; err != nil {
 		return model.User{}, err
 	}
 	return user, nil

@@ -6,15 +6,22 @@ import (
 	srv "tikapp/service"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 var r srv.Relation
 
+// RelationFollowReq 关注请求
+type RelationFollowReq struct {
+	Token      string `form:"token" binding:"required"`
+	ToUserId   int64  `form:"to_user_id" binding:"required"`
+	ActionType int32  `form:"action_type" binding:"required"`
+}
+
 // RelationAction 关注或取消关注
 func RelationAction(c *gin.Context) {
-	var req srv.RelationFollow
-	err := c.ShouldBindWith(&req, binding.Query)
+	var req RelationFollowReq
+	var srvR srv.RelationFollow
+	err := c.ShouldBind(&req)
 	if err != nil {
 		log.Logger.Error("check params error")
 		res.Error(c, res.QueryParamErrorStatus)
@@ -22,12 +29,18 @@ func RelationAction(c *gin.Context) {
 	}
 
 	if req.Token == "" {
-		log.Logger.Error("before login in")
+		log.Logger.Error("operation illegal")
 		res.Error(c, res.PermissionErrorStatus)
 		return
 	}
 
-	if err = r.RelationAction(&req); err != nil {
+	userId, _ := c.Get("userId")
+	srvR.UserId = userId.(int64)
+	srvR.ToUserId = req.ToUserId
+	srvR.Token = req.Token
+	srvR.ActionType = req.ActionType
+
+	if err = r.RelationAction(&srvR); err != nil {
 		log.Logger.Error(err.Error())
 		res.Error(c, res.Status{
 			StatusCode: res.FollowErrorStatus.StatusCode,
@@ -42,13 +55,14 @@ func RelationAction(c *gin.Context) {
 // FollowList 获取用户关注的列表
 func FollowList(c *gin.Context) {
 	var req srv.UserFollowerReq
-	err := c.ShouldBindWith(&req, binding.Query)
+	err := c.ShouldBind(&req)
 	if err != nil {
 		res.Error(c, res.QueryParamErrorStatus)
 		return
 	}
 
 	if req.Token == "" {
+		log.Logger.Error("operation illegal")
 		res.Error(c, res.PermissionErrorStatus)
 		return
 	}
@@ -61,15 +75,6 @@ func FollowList(c *gin.Context) {
 		})
 		return
 	}
-	
-	// resp := make(srv.UserFollowerResp, 0, len(resp0))
-	// for i := 0; i < len(resp); i++ {
-	// 	resp[i].Id = resp0[i].Id
-	// 	resp[i].Name = resp0[i].Name
-	// 	resp[i].FollowCount = resp0[i].FollowCount
-	// 	resp[i].FollowerCount = resp0[i].FollowerCount
-	// 	resp[i].IsFollow = true
-	// }
 
 	res.Success(c, res.R{
 		"user_list": resp,
@@ -80,4 +85,3 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 
 }
-

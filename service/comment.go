@@ -69,8 +69,9 @@ func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (Comme
 	if err != nil {
 		return CommentResp{}, err
 	}
-	err = tx.Debug().Delete(&model.Comment{}, commentId).Error
-	if err != nil {
+	if err = tx.Debug().
+		Delete(&model.Comment{}, commentId).
+		Error; err != nil {
 		tx.Rollback()
 		return CommentResp{}, err
 	}

@@ -10,9 +10,17 @@ import (
 
 var r srv.Relation
 
+// RelationFollowReq 关注请求
+type RelationFollowReq struct {
+	Token      string `form:"token" binding:"required"`
+	ToUserId   int64  `form:"to_user_id" binding:"required"`
+	ActionType int32  `form:"action_type" binding:"required"`
+}
+
 // RelationAction 关注或取消关注
 func RelationAction(c *gin.Context) {
-	var req srv.RelationFollow
+	var req RelationFollowReq
+	var srvR srv.RelationFollow
 	err := c.ShouldBind(&req)
 	if err != nil {
 		log.Logger.Error("check params error")
@@ -20,14 +28,19 @@ func RelationAction(c *gin.Context) {
 		return
 	}
 
-	userId, _ := c.Get("userId")
-	if req.Token == "" || req.UserId != userId.(int64) {
+	if req.Token == "" {
 		log.Logger.Error("operation illegal")
 		res.Error(c, res.PermissionErrorStatus)
 		return
 	}
 
-	if err = r.RelationAction(&req); err != nil {
+	userId, _ := c.Get("userId")
+	srvR.UserId = userId.(int64)
+	srvR.ToUserId = req.ToUserId
+	srvR.Token = req.Token
+	srvR.ActionType = req.ActionType
+
+	if err = r.RelationAction(&srvR); err != nil {
 		log.Logger.Error(err.Error())
 		res.Error(c, res.Status{
 			StatusCode: res.FollowErrorStatus.StatusCode,
@@ -72,4 +85,3 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 
 }
-

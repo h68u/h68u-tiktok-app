@@ -49,7 +49,7 @@ func Info(c *gin.Context) {
 
 	// 通过token获取当前用户ID，如果是游客（token为空），则当前用户ID为0
 	if token != "" {
-		myUserID, err = util.GetUsernameFormToken(token)
+		myUserID, err = util.GetUserIDFormToken(token)
 		if err != nil {
 			res.Error(c, res.Status{
 				StatusCode: res.TokenErrorStatus.StatusCode,

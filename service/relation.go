@@ -138,14 +138,6 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 		_ = rows.Close()
 	}()
 
-	// for i := 0; rows.Next(); i++ {
-	// 	if err := rows.Scan(&uResp0[i].Id, &uResp0[i].Name, &uResp[i].FollowCount, &uResp[i].FollowerCount);
-	// 	err != nil {
-	// 		log.Logger.Error("mysql error in writing in uResp0")
-	//      return nil, err
-	// 	}
-	// }
-
 	for rows.Next() {
 		bucket := struct {
 			Id            int64
@@ -170,16 +162,6 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 		})
 	}
 
-	// 初始化
-	// uResp = make(UserFollowerResp, len(uResp0))
-	// for i := 0; uResp0[i].Id != 0; i++ {
-	// 	uResp[i].Id = uResp0[i].Id
-	// 	uResp[i].Name = uResp0[i].Name
-	// 	uResp[i].FollowCount = uResp0[i].FollowCount
-	// 	uResp[i].FollowerCount = uResp0[i].FollowerCount
-	// 	uResp[i].IsFollow = false
-	// }
-
 	for i := 0; i < len(uResp); i++ {
 		tid := u.UserId
 		if err := db.MySQL.Debug().Model(&model.Follow{}).
@@ -191,4 +173,16 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 	}
 
 	return uResp, nil
+}
+
+// isFollowed 检查给定 h: host 是否关注了 u: user (给定的user)
+func isFollowed(h, u int64) bool {
+	if err := db.MySQL.Debug().
+		Where("follow_id = ? and user_id = ?", h, u).
+		First(&model.Follow{}).Error;
+	err != nil {
+		return false
+	}
+
+	return true
 }

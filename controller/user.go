@@ -5,7 +5,6 @@ import (
 	"strconv"
 	res "tikapp/common/result"
 	srv "tikapp/service"
-	"tikapp/util"
 )
 
 // Register 新用户注册
@@ -47,15 +46,17 @@ func Info(c *gin.Context) {
 	targetUserID, _ := strconv.Atoi(c.Query("user_id"))
 	token := c.Query("token")
 
-	// 通过token获取当前用户ID，如果是游客（token为空），则当前用户ID为0
+	// 通过token获取当前用户ID，如果是游客（token为空），当前用户ID为0
 	if token != "" {
-		myUserID, err = util.GetUserIDFormToken(token)
-		if err != nil {
+		// 使用c.Get() 获取token的uid
+		if uid, exist := c.Get("userId"); uid == "" && !exist {
 			res.Error(c, res.Status{
 				StatusCode: res.TokenErrorStatus.StatusCode,
 				StatusMsg:  "token error",
 			})
 			return
+		} else {
+			myUserID = uid.(int64)
 		}
 	}
 

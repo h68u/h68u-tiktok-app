@@ -10,7 +10,6 @@ import (
 )
 
 type CommentActionReq struct {
-	UserId      int64  `form:"user_id"`
 	VideoId     int64  `form:"video_id"`
 	ActionId    byte   `form:"action_type" `
 	CommentId   int64  `form:"comment_id" `
@@ -26,7 +25,8 @@ var comm srv.Comment
 // CommentAction 执行评论
 // todo 错误处理有点繁琐, 之后加个中间件处理
 func CommentAction(c *gin.Context) {
-	// _, _ = c.Get("UserId")
+	userIdI, _ := c.Get("UserId")
+	userId := userIdI.(int64)
 	var req CommentActionReq
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
@@ -37,8 +37,6 @@ func CommentAction(c *gin.Context) {
 		})
 		return
 	}
-
-	// 请求参数错误
 	if req.ActionId != 1 && req.ActionId != 2 {
 		res.Error(c, res.Status{
 			StatusCode: res.QueryParamErrorStatus.StatusCode,
@@ -52,7 +50,7 @@ func CommentAction(c *gin.Context) {
 	switch req.ActionId {
 	// 发布评论
 	case 1:
-		commentResp, err = comm.Publish(req.UserId, req.VideoId, req.CommentText)
+		commentResp, err = comm.Publish(userId, req.VideoId, req.CommentText)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				res.Error(c, res.Status{
@@ -65,7 +63,7 @@ func CommentAction(c *gin.Context) {
 		}
 	// 删除评论
 	case 2:
-		commentResp, err = comm.Delete(req.UserId, req.VideoId, req.CommentId)
+		commentResp, err = comm.Delete(userId, req.VideoId, req.CommentId)
 		if err != nil {
 			// 评论不存在
 			if err == gorm.ErrRecordNotFound {

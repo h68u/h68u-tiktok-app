@@ -33,14 +33,29 @@ type UserDemo struct {
 
 // Feed 获取视频列表
 // id 若为-1，表示没有获取到用户id
+// lastTime 值0时不限制；限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
 // nextTime 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
-func (f Feed) Feed(id int64) (interface{}, error) {
+func (f Feed) Feed(id int64, lastTime int64) (interface{}, error) {
 	// 目前：取出最新视频
-	// TODO：控制视频数量
+	// TODO：控制视频数量，应该不是简单limit，需要保证视频一直可以刷下去，可能涉及并发
+
 	var videos []model.Video
-	err := db.MySQL.Model(&model.Video{}).Order("create_time desc").Find(&videos).Error
-	if err != nil {
-		return nil, err
+	if lastTime != 0 {
+		// TODO：时间单位确定
+		err := db.MySQL.Model(&model.Video{}).
+			Where("created_at < ?", lastTime).
+			Order("created_at desc").
+			Limit(30).Find(&videos).Error
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := db.MySQL.Model(&model.Video{}).
+			Order("create_time desc").
+			Limit(30).Find(&videos).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var nextTime int64 = 0

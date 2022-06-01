@@ -26,8 +26,6 @@ type UserResp struct {
 	IsFollow      bool   `json:"is_follow"`
 }
 
-var tx = db.MySQL.Begin()
-
 // Publish 发表评论
 func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (CommentResp, error) {
 	comment := model.Comment{
@@ -40,6 +38,7 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 	if err != nil {
 		return CommentResp{}, err
 	}
+	tx := db.MySQL.Begin()
 	if err = tx.Debug().
 		Model(&model.Comment{}).
 		Create(&comment).
@@ -47,6 +46,7 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		tx.Rollback()
 		return CommentResp{}, err
 	}
+	tx.Commit()
 	return genCommentResp(comment, publisher), nil
 }
 
@@ -69,12 +69,14 @@ func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (Comme
 	if err != nil {
 		return CommentResp{}, err
 	}
+	tx := db.MySQL.Begin()
 	if err = tx.Debug().
 		Delete(&model.Comment{}, commentId).
 		Error; err != nil {
 		tx.Rollback()
 		return CommentResp{}, err
 	}
+	tx.Commit()
 	return genCommentResp(comment, publisher), nil
 }
 

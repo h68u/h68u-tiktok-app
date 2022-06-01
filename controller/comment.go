@@ -25,7 +25,7 @@ var comm srv.Comment
 // CommentAction 执行评论
 // todo 错误处理有点繁琐, 之后加个中间件处理
 func CommentAction(c *gin.Context) {
-	userIdI, _ := c.Get("UserId")
+	userIdI, _ := c.Get("userId")
 	userId := userIdI.(int64)
 	var req CommentActionReq
 	err := c.ShouldBindWith(&req, binding.Query)

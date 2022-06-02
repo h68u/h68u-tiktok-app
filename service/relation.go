@@ -158,18 +158,8 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 				FollowCount:   bucket.FollowCount,
 				FollowerCount: bucket.FollowerCount,
 			},
-			IsFollow: false,
+			IsFollow: true,
 		})
-	}
-
-	for i := 0; i < len(uResp); i++ {
-		tid := u.UserId
-		if err := db.MySQL.Debug().Model(&model.Follow{}).
-			Where("follow_id = ? and user_id = ?", uResp[i].Id, tid).
-			First(struct{}{}).Error; err != nil {
-			continue
-		}
-		uResp[i].IsFollow = true
 	}
 
 	return uResp, nil

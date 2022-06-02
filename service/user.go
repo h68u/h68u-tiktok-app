@@ -76,7 +76,13 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	//c.Header("token", token) // 不需要了
 
 	// key: 2h token; value 30d token; key live time: 30d
-	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+
+	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+		log.Logger.Error("redis set error", zap.Error(err))
+		return nil, err
+	} else {
+		log.Logger.Debug("redis set success")
+	}
 
 	return UserLoginResp{
 		UserId: user.Id,
@@ -131,7 +137,12 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	}
 
 	// key: 2h token; value 30d token; key live time: 30d
-	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+		log.Logger.Error("redis set error", zap.Error(err))
+		return nil, err
+	} else {
+		log.Logger.Debug("redis set success")
+	}
 
 	return UserRegisterResp{
 		UserId: user.Id,

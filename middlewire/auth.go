@@ -2,6 +2,7 @@ package middlewire
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"tikapp/common/db"
@@ -32,6 +33,7 @@ func Auth() gin.HandlerFunc {
 			token = c.PostForm("token")
 		}
 		if token == "" {
+
 			/*//判断浏览器是否存在cookie，存在表示非第一次访问
 			logger.Info("start valid cookie")
 			_, err := c.Cookie("visit-user")
@@ -47,6 +49,7 @@ func Auth() gin.HandlerFunc {
 				return
 			}
 			//有cookie,直接next*/
+
 			c.Set("userId", "")
 			c.Next()
 			return
@@ -58,12 +61,16 @@ func Auth() gin.HandlerFunc {
 		if err != nil || validToken {
 			//token过期或者解析token发生错误
 			log.Logger.Info("token expire or parse token error")
+			log.Logger.Debug("valid token err", zap.Error(err))
 			log.Logger.Info("valid refreshToken")
-			value := db.Redis.Get(token)
 
-			// 30d toke 能否取出
-			refreshToken, err1 := value.Result()
-			if err1 != nil {
+			// 30d token 能否取出
+			value := db.Redis.Get(token)
+			refreshToken, err := value.Result()
+			if err != nil {
+				// debug
+				log.Logger.Debug("get refreshToken from redis err", zap.Error(err))
+
 				log.Logger.Error("token不合法，请确认你是否登录")
 				c.JSON(200, gin.H{
 					"status_code": 400,
@@ -74,14 +81,17 @@ func Auth() gin.HandlerFunc {
 			}
 
 			// 可以取出30d token, 检查是否过期
-			b, err1 := util.ValidToken(refreshToken)
-			if err1 != nil || b {
+			validToken, err := util.ValidToken(refreshToken)
+			if err != nil || validToken {
+				log.Logger.Debug("valid refreshToken err:", zap.Error(err))
 				//refreshToken出问题，表明用户三十天未登录，需要重新登录
 				log.Logger.Info("user need login again")
+
 				//直接变成访客状态
 				/*u := uuid.New()
 				c.SetCookie("visit-user", u.String(), 30*24*60*60*1000, "/", "localhost", false, true)
 				c.Next()*/
+
 				db.Redis.Del(token)
 				c.Set("userId", "")
 				c.Next()
@@ -89,32 +99,35 @@ func Auth() gin.HandlerFunc {
 			}
 
 			// refresh token 没过期
-			userId, err1 := util.GetUserIDFormToken(refreshToken)
-			if err1 != nil {
-				log.Logger.Error("parse token error")
+			userId, err := util.GetUserIDFormToken(refreshToken)
+			if err != nil {
+				log.Logger.Error("parse token to get uid error:", zap.Error(err))
 				//token解析不了的情况一般很少,暂时panic一下
-				panic(err1)
+				panic(err)
 			}
 
-			//根据refreshToken 更新 accessToken
 			db.Redis.Del(token) // 首先删除redis记录
-			accessToken, err1 := util.CreateAccessToken(userId)
-			if err1 != nil {
-				log.Logger.Error("parse token error")
+
+			//根据refreshToken 更新 accessToken
+			accessToken, err := util.CreateAccessToken(userId)
+			if err != nil {
+				log.Logger.Error("create acc token error:", zap.Error(err))
 				//token解析不了的情况一般很少,暂时panic一下
-				panic(err1)
+				panic(err)
 			}
 
 			//更新后，重新设置redis的key
-			newRefreshToken, err1 := util.CreateRefreshToken(userId)
-			if err1 != nil {
-				log.Logger.Error("parse token error")
+			newRefreshToken, err := util.CreateRefreshToken(userId)
+			if err != nil {
+				log.Logger.Error("creat ref token error:", zap.Error(err))
 				//token解析不了的情况一般很少,暂时panic一下
-				panic(err1)
+				panic(err)
 			}
 
 			// 生成新的redis记录
-			db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour)
+			if err := db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
+				log.Logger.Error("create redis acc token error:", zap.Error(err))
+			}
 
 			//获取之前请求的所有query参数： 替换过期的acc(ref还未失效期间)，过期的acc仍然可以使用接口
 			dataMap := make(map[string]string)
@@ -134,6 +147,9 @@ func Auth() gin.HandlerFunc {
 				pre = pre + key + "=" + val + "&"
 			} // eg.xxx:8080/api?a=1&b=2&token=xxx&
 			newUrl := strings.TrimSuffix(pre, "&") // eg.xxx:8080/api?a=1&b=2&token=xxx
+
+			log.Logger.Debug("check url", zap.String("newUrl", newUrl))
+
 			c.Redirect(http.StatusMovedPermanently, newUrl)
 			c.Set("userId", userId)
 			c.Next()

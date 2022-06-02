@@ -16,11 +16,19 @@ const BucketName = "tiktok-video11"
 
 func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId int64) error {
 	//oss.CreateBucket(BucketName)
+	// 获取文件
 	file, err := data.Open()
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
+
+	// 存储到oss
 	ok, err := oss.UploadVideoToOss(BucketName, data.Filename, file)
 	if err != nil {
 		return err
@@ -28,6 +36,8 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 	if !ok {
 		return errors.New("upload video error")
 	}
+
+	// 获取url 存储到数据库
 	videoUrl, imgUrl, err := oss.GetOssVideoUrlAndImgUrl(BucketName, data.Filename)
 	if err != nil {
 		return err
@@ -49,6 +59,7 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 }
 
 func (v Video) PublishList(myUserID, targetUserID int64) ([]VideoDemo, error) {
+	// 获取目标用户发布的视频
 	var videos []VideoDemo
 	var videoInTable []model.Video
 	err := db.MySQL.Model(&model.Video{}).Where("publish_id = ?", targetUserID).Find(&videoInTable).Error

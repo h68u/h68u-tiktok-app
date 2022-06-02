@@ -17,6 +17,7 @@ type Claims struct {
 func CreateAccessToken(userId int64) (string, error) {
 	nowTime := time.Now()
 	expireTime := nowTime.Add(2 * 60 * time.Minute)
+	//expireTime := nowTime.Add(1 * time.Minute) // TODO deal bug
 	claims := Claims{
 		UserId: userId,
 		StandardClaims: jwt.StandardClaims{
@@ -60,7 +61,7 @@ func GetUserIDFormToken(token string) (int64, error) {
 }
 
 // ValidToken 校验token是否过期
-// bool: 是否过期 default: true
+// bool: 是否过期 default: true 过期
 // error: 解析是否成功 default: nil
 func ValidToken(token string) (bool, error) {
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {

@@ -47,11 +47,7 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		return CommentResp{}, err
 	}
 	tx.Commit()
-	publishId, err := getPublisherByVideoId(videoId)
-	if err != nil {
-		return CommentResp{}, err
-	}
-	return genCommentResp(comment, user, publishId), nil
+	return genCommentResp(comment, user), nil
 }
 
 // Delete 删除评论
@@ -81,11 +77,7 @@ func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (Comme
 		return CommentResp{}, err
 	}
 	tx.Commit()
-	publishId, err := getPublisherByVideoId(videoId)
-	if err != nil {
-		return CommentResp{}, err
-	}
-	return genCommentResp(comment, publisher, publishId), nil
+	return genCommentResp(comment, publisher), nil
 }
 
 func (comm *Comment) List(videoId int64) ([]CommentResp, error) {
@@ -97,11 +89,7 @@ func (comm *Comment) List(videoId int64) ([]CommentResp, error) {
 		Find(&comments).Error; err != nil {
 		return nil, err
 	}
-	publishId, err := getPublisherByVideoId(videoId)
-	if err != nil {
-		return nil, err
-	}
-	resp := genCommentListResp(comments, publishId)
+	resp := genCommentListResp(comments)
 	return resp, nil
 }
 
@@ -117,32 +105,30 @@ func getUserByUserId(userId int64) (model.User, error) {
 	return user, nil
 }
 
-// 根据 videoId 获得 publishId
-func getPublisherByVideoId(videoId int64) (int64, error) {
+// 根据 videoId 判断是否关注了发布者
+func isFollowByVideoId(userId int64, videoId int64) bool {
+	var follow model.Follow
 	var video model.Video
 	if err := db.MySQL.Debug().
 		Model(&model.Video{}).
 		First(&video, videoId).
 		Error; err != nil {
-		return 0, err
+		return false
 	}
-	return video.PublishId, nil
-}
-
-// 判断 userId 是否关注了 publishId
-func isFollow(userId int64, publishId int64) bool {
-	var follow model.Follow
 	if err := db.MySQL.Debug().
 		Model(&model.Follow{}).
-		Where("follow_id = ? and user_id = ?", publishId, userId).
+		Where("follow_id = ? and user_id = ?", userId, video.PublishId).
 		Find(&follow).
 		Error; err != nil {
+		return false
+	}
+	if follow.Id == 0 {
 		return false
 	}
 	return true
 }
 
-func genCommentResp(comment model.Comment, user model.User, publishId int64) CommentResp {
+func genCommentResp(comment model.Comment, user model.User) CommentResp {
 	resp := CommentResp{
 		Id:         comment.Id,
 		Content:    comment.Content,
@@ -154,13 +140,13 @@ func genCommentResp(comment model.Comment, user model.User, publishId int64) Com
 		Name:          user.Name,
 		FollowCount:   user.FollowerCount,
 		FollowerCount: user.FollowCount,
-		IsFollow:      isFollow(comment.UserId, publishId),
+		IsFollow:      isFollowByVideoId(comment.UserId, comment.VideoId),
 	}
 	resp.User = userResp
 	return resp
 }
 
-func genCommentListResp(comments []model.Comment, publishId int64) []CommentResp {
+func genCommentListResp(comments []model.Comment) []CommentResp {
 	resp := make([]CommentResp, 0, len(comments))
 	for _, comment := range comments {
 		userResp := UserResp{
@@ -168,7 +154,7 @@ func genCommentListResp(comments []model.Comment, publishId int64) []CommentResp
 			Name:          comment.User.Name,
 			FollowCount:   comment.User.FollowCount,
 			FollowerCount: comment.User.FollowerCount,
-			IsFollow:      isFollow(comment.UserId, publishId),
+			IsFollow:      isFollowByVideoId(comment.UserId, comment.VideoId),
 		}
 		commentResp := CommentResp{
 			Id:         comment.Id,

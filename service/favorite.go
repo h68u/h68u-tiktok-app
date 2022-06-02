@@ -99,7 +99,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollow(favor.User.Id, favor.VideoId), //未完成是否关注
+			IsFollow:      isFollowByVideoId(favor.User.Id, favor.VideoId), //未完成是否关注
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,

@@ -169,10 +169,52 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 func isFollowed(h, u int64) bool {
 	if err := db.MySQL.Debug().
 		Where("follow_id = ? and user_id = ?", h, u).
-		First(&model.Follow{}).Error;
-	err != nil {
+		First(&model.Follow{}).Error; err != nil {
 		return false
 	}
 
 	return true
+}
+
+// FollowerList 获取给定用户的粉丝列表
+func FollowerList(userId int64) ([]UserDemo, error) {
+	var ans []UserDemo
+	//var followInTable model.Follow
+
+	//获取所有粉丝
+	rows, err := db.MySQL.Debug().Table("follow").
+		Select("follow_id").
+		Where("user_id = ?", userId).
+		Rows()
+	if err != nil {
+		log.Logger.Error("mysql error in get follower list")
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	//逐个处理每个粉丝信息
+	for rows.Next() {
+		var u User            // 因为Info方法是User结构体的方法
+		var fansId int64      //要从粉丝表中获取的粉丝id
+		var fansInfo UserDemo //粉丝信息
+
+		err := rows.Scan(&fansId)
+		if err != nil {
+			log.Logger.Error("mysql error in writing in fansId")
+			return nil, err
+		}
+
+		fansInfo, err = u.Info(userId, fansId)
+		if err != nil {
+			log.Logger.Error("get userInfo err")
+			return nil, err
+		}
+
+		ans = append(ans, fansInfo)
+
+	}
+
+	return ans, nil
 }

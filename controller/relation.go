@@ -83,5 +83,29 @@ func FollowList(c *gin.Context) {
 
 // FollowerList 获取用户的粉丝列表
 func FollowerList(c *gin.Context) {
+	var req srv.UserFollowerReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		res.Error(c, res.QueryParamErrorStatus)
+		return
+	}
 
+	if req.Token == "" {
+		log.Logger.Error("operation illegal")
+		res.Error(c, res.PermissionErrorStatus)
+		return
+	}
+
+	ans, err := srv.FollowerList(req.UserId)
+	if err != nil {
+		res.Error(c, res.Status{
+			StatusCode: res.FollowListErrorStatus.StatusCode,
+			StatusMsg:  res.FollowListErrorStatus.StatusMsg,
+		})
+		return
+	}
+
+	res.Success(c, res.R{
+		"user_list": ans,
+	})
 }

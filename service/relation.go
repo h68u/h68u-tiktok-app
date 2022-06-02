@@ -179,10 +179,35 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 func isFollowed(h, u int64) bool {
 	if err := db.MySQL.Debug().
 		Where("follow_id = ? and user_id = ?", h, u).
-		First(&model.Follow{}).Error;
-	err != nil {
+		First(&model.Follow{}).Error; err != nil {
 		return false
 	}
 
 	return true
+}
+
+// FollowerList 获取给定用户的粉丝列表（效率极低，待修改）
+func FollowerList(userId int64) ([]UserDemo, error) {
+	var ans []UserDemo
+	var lastUser model.User
+	err := db.MySQL.Debug().Table("user").Last(&lastUser).Error
+	if err != nil {
+		return nil, err
+	}
+	userCount := lastUser.Id
+
+	for i := int64(1); i <= userCount; i++ {
+		if isFollowed(i, userId) {
+			var u User
+			var user UserDemo
+			//if err := db.MySQL.Debug().Table("user").
+			//	Where("id = ?", i).
+			//	First(&user).Error; err != nil {
+			//	return nil, err
+			//}
+			user, _ = u.Info(userId, i)
+			ans = append(ans, user)
+		}
+	}
+	return ans, nil
 }

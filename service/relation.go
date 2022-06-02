@@ -158,19 +158,21 @@ func (r Relation) FollowList(u *UserFollowerReq) (UserFollowerResp, error) {
 				FollowCount:   bucket.FollowCount,
 				FollowerCount: bucket.FollowerCount,
 			},
-			IsFollow: false,
+			// TODO: 确定 app 展示的关系 应该为 true
+			IsFollow: true,
 		})
 	}
 
-	for i := 0; i < len(uResp); i++ {
-		tid := u.UserId
-		if err := db.MySQL.Debug().Model(&model.Follow{}).
-			Where("follow_id = ? and user_id = ?", uResp[i].Id, tid).
-			First(struct{}{}).Error; err != nil {
-			continue
-		}
-		uResp[i].IsFollow = true
-	}
+	// TODO: 这里应该删掉
+	// for i := 0; i < len(uResp); i++ {
+	// 	tid := u.UserId
+	// 	if err := db.MySQL.Debug().Model(&model.Follow{}).
+	// 		Where("follow_id = ? and user_id = ?", uResp[i].Id, tid).
+	// 		First(struct{}{}).Error; err != nil {
+	// 		continue
+	// 	}
+	// 	uResp[i].IsFollow = true
+	// }
 
 	return uResp, nil
 }

@@ -186,28 +186,45 @@ func isFollowed(h, u int64) bool {
 	return true
 }
 
-// FollowerList 获取给定用户的粉丝列表（效率极低，待修改）
+// FollowerList 获取给定用户的粉丝列表
 func FollowerList(userId int64) ([]UserDemo, error) {
 	var ans []UserDemo
-	var lastUser model.User
-	err := db.MySQL.Debug().Table("user").Last(&lastUser).Error
+	//var followInTable model.Follow
+
+	//获取所有粉丝
+	rows, err := db.MySQL.Debug().Table("follow").
+		Select("follow_id").
+		Where("user_id = ?", userId).
+		Rows()
 	if err != nil {
+		log.Logger.Error("mysql error in get follower list")
 		return nil, err
 	}
-	userCount := lastUser.Id
+	defer func() {
+		_ = rows.Close()
+	}()
 
-	for i := int64(1); i <= userCount; i++ {
-		if isFollowed(i, userId) {
-			var u User
-			var user UserDemo
-			//if err := db.MySQL.Debug().Table("user").
-			//	Where("id = ?", i).
-			//	First(&user).Error; err != nil {
-			//	return nil, err
-			//}
-			user, _ = u.Info(userId, i)
-			ans = append(ans, user)
+	//逐个处理每个粉丝信息
+	for rows.Next() {
+		var u User            // 因为Info方法是User结构体的方法
+		var fansId int64      //要从粉丝表中获取的粉丝id
+		var fansInfo UserDemo //粉丝信息
+
+		err := rows.Scan(&fansId)
+		if err != nil {
+			log.Logger.Error("mysql error in writing in fansId")
+			return nil, err
 		}
+
+		fansInfo, err = u.Info(userId, fansId)
+		if err != nil {
+			log.Logger.Error("get userInfo err")
+			return nil, err
+		}
+
+		ans = append(ans, fansInfo)
+
 	}
+
 	return ans, nil
 }

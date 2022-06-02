@@ -34,7 +34,7 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		Content:    commentText,
 		CreateTime: time.Now().Unix(),
 	}
-	publisher, err := getPublisherByVideoId(videoId)
+	user, err := getUserByUserId(userId)
 	if err != nil {
 		return CommentResp{}, err
 	}
@@ -47,7 +47,7 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		return CommentResp{}, err
 	}
 	tx.Commit()
-	return genCommentResp(comment, publisher), nil
+	return genCommentResp(comment, user), nil
 }
 
 // Delete 删除评论
@@ -65,7 +65,7 @@ func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (Comme
 		return CommentResp{}, ErrPermit
 	}
 	// 获取这条评论所属视频id,用于之后查询视频信息
-	publisher, err := getPublisherByVideoId(videoId)
+	publisher, err := getUserByUserId(videoId)
 	if err != nil {
 		return CommentResp{}, err
 	}
@@ -93,19 +93,12 @@ func (comm *Comment) List(videoId int64) ([]CommentResp, error) {
 	return resp, nil
 }
 
-// 根据 videoId 获得视频发布者 user
-func getPublisherByVideoId(videoId int64) (model.User, error) {
-	var video model.Video
-	if err := db.MySQL.Debug().
-		Model(&model.Video{}).
-		First(&video, videoId).
-		Error; err != nil {
-		return model.User{}, err
-	}
+// 根据 userId 获得 user
+func getUserByUserId(userId int64) (model.User, error) {
 	var user model.User
 	if err := db.MySQL.Debug().
 		Model(&model.User{}).
-		First(&user, video.PublishId).
+		First(&user, userId).
 		Error; err != nil {
 		return model.User{}, err
 	}
@@ -124,14 +117,14 @@ func genCommentResp(comment model.Comment, user model.User) CommentResp {
 		CreateDate: time.Unix(comment.CreateTime, 0).Format("2006-01-02 03:04:05 PM"),
 		User:       UserResp{},
 	}
-	publisher := UserResp{
+	userResp := UserResp{
 		Id:            user.Id,
 		Name:          user.Name,
 		FollowCount:   user.FollowerCount,
 		FollowerCount: user.FollowCount,
 		IsFollow:      isFollow(user.Id),
 	}
-	resp.User = publisher
+	resp.User = userResp
 	return resp
 }
 

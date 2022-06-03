@@ -67,8 +67,11 @@ func FollowList(c *gin.Context) {
 		return
 	}
 
+	t, _ := c.Get("userId")
+	userId := t.(int64)
+
 	var resp srv.UserFollowerResp
-	if resp, err = r.FollowList(&req); err != nil {
+	if resp, err = r.FollowList(&req, userId); err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.FollowListErrorStatus.StatusCode,
 			StatusMsg:  res.FollowListErrorStatus.StatusMsg,

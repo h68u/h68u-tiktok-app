@@ -17,7 +17,7 @@ type Claims struct {
 func CreateAccessToken(userId int64) (string, error) {
 	nowTime := time.Now()
 	expireTime := nowTime.Add(2 * 60 * time.Minute)
-	//expireTime := nowTime.Add(1 * time.Minute) // TODO deal bug
+	//expireTime := nowTime.Add(1 * time.Minute) // TODO 完成新的解决方法
 	claims := Claims{
 		UserId: userId,
 		StandardClaims: jwt.StandardClaims{

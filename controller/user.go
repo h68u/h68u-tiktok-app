@@ -2,9 +2,12 @@ package ctrl
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
+	"tikapp/common/log"
 	res "tikapp/common/result"
 	srv "tikapp/service"
+	"tikapp/util"
 )
 
 // Register 新用户注册
@@ -78,6 +81,22 @@ func Info(c *gin.Context) {
 
 // Login 用户登录
 func Login(c *gin.Context) {
+	// 后台登录（解决redis刷新token）
+	// TODO 解决替换问题
+	token := c.Query("token")
+	if token != "" {
+		// 后台登录 默认没有问题
+		var data srv.UserLoginResp
+		data.UserId, _ = util.GetUserIDFormToken(token)
+		data.Token = token
+		log.Logger.Info("backend login msg", zap.Any("request", data))
+		res.Success(c, res.R{
+			"user_id": data.UserId,
+			"token":   data.Token,
+		})
+		return
+	}
+	// 非后台登录
 	var u srv.User
 	login, err := u.Login(c)
 	if err != nil {
@@ -87,6 +106,7 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+
 	data := login.(srv.UserLoginResp)
 	res.Success(c, res.R{
 		"user_id": data.UserId,

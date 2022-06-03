@@ -24,6 +24,8 @@ import (
 // ref token没过期，生成新的acc token，ref token(防止恰好此时失效，同时更新)，删除旧的记录，新建Redis记录
 //
 // 3.acc和ref同时更新，只有在30天没有没有登录时提醒重新登陆
+//
+// TODO 目前redis更新时可能并发不安全（能力不够，不知道怎么解决）
 func Auth() gin.HandlerFunc {
 	//先判断请求头是否为空，为空则为游客状态
 	return func(c *gin.Context) {
@@ -56,9 +58,9 @@ func Auth() gin.HandlerFunc {
 		}
 
 		//有token，判断是否过期: 2h
-		validToken, err := util.ValidToken(token)
+		timeOut, err := util.ValidToken(token)
 
-		if err != nil || validToken {
+		if err != nil || timeOut {
 			//token过期或者解析token发生错误
 			log.Logger.Info("token expire or parse token error")
 			log.Logger.Debug("valid token err", zap.Error(err))
@@ -81,8 +83,8 @@ func Auth() gin.HandlerFunc {
 			}
 
 			// 可以取出30d token, 检查是否过期
-			validToken, err := util.ValidToken(refreshToken)
-			if err != nil || validToken {
+			timeOut, err := util.ValidToken(refreshToken)
+			if err != nil || timeOut {
 				log.Logger.Debug("valid refreshToken err:", zap.Error(err))
 				//refreshToken出问题，表明用户三十天未登录，需要重新登录
 				log.Logger.Info("user need login again")
@@ -106,7 +108,16 @@ func Auth() gin.HandlerFunc {
 				panic(err)
 			}
 
-			db.Redis.Del(token) // 首先删除redis记录
+			/*
+				是否应该删除旧的token
+				如果一直使用旧的token请求，那么一个折中的方法是更新kv
+				（old acc, old ref）更新为 （old acc, new ref）
+
+				目前解决方法：
+				删除旧的token, 调用登录接口后台帮助 非登录30天的用户登录
+			*/
+			// TODO  新的解决方法
+			//db.Redis.Del(token)
 
 			//根据refreshToken 更新 accessToken
 			accessToken, err := util.CreateAccessToken(userId)
@@ -124,10 +135,26 @@ func Auth() gin.HandlerFunc {
 				panic(err)
 			}
 
-			// 生成新的redis记录
-			if err := db.Redis.Set(accessToken, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
-				log.Logger.Error("create redis acc token error:", zap.Error(err))
+			// debug
+			//{
+			//	log.Logger.Debug("old acc token: " + token)
+			//	log.Logger.Debug("new acc token: " + accessToken)
+			//	log.Logger.Debug("new ref token: " + newRefreshToken)
+			//}
+
+			if err := db.Redis.Set(token, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
+				log.Logger.Error("create redis acc token error", zap.Error(err))
+			} else {
+				log.Logger.Debug("redis set success")
 			}
+
+			// 生成新的redis记录
+			// TODO 新的解决方法: 后台登录
+			//if err := db.Redis.Set(token, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
+			//	log.Logger.Error("create redis acc token error", zap.Error(err))
+			//} else {
+			//	log.Logger.Debug("redis set success")
+			//}
 
 			//获取之前请求的所有query参数： 替换过期的acc(ref还未失效期间)，过期的acc仍然可以使用接口
 			dataMap := make(map[string]string)
@@ -152,6 +179,12 @@ func Auth() gin.HandlerFunc {
 
 			c.Redirect(http.StatusMovedPermanently, newUrl)
 			c.Set("userId", userId)
+
+			// TODO 后台登录
+			// 要求下次请求更换url
+			//log.Logger.Debug("backend login start")
+			//ctrl.Login(c)
+			//log.Logger.Debug("backend login finish")
 			c.Next()
 			return
 		}

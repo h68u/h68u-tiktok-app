@@ -17,8 +17,8 @@ import (
 
 type User struct{}
 type UserLoginReq struct {
-	Username string `form:"username"`
-	Password string `form:"password"`
+	Username string `form:"username" binding:"required,min=1,max=32"`
+	Password string `form:"password" binding:"required,min=1,max=32"`
 }
 
 type UserLoginResp struct {
@@ -38,6 +38,7 @@ type UserRegisterResp struct {
 
 func (u User) Login(c *gin.Context) (interface{}, error) {
 	var req UserLoginReq
+	var token string
 
 	// 解析参数
 	err := c.ShouldBindWith(&req, binding.Query)
@@ -60,7 +61,7 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	}
 
 	// acc token: 2h
-	token, err := util.CreateAccessToken(user.Id)
+	token, err = util.CreateAccessToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create access token error")
 		return nil, err

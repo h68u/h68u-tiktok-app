@@ -2,7 +2,6 @@ package srv
 
 import (
 	"errors"
-	"strconv"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
@@ -127,18 +126,14 @@ type UserFollowerResp = []UserFollowerItem
 const sqlUserFollower = `select u.id, u.name, u.follow_count, u.follower_count from user as u, follow as f where f.follow_id = ? and f.user_id = u.id;`
 
 // FollowList 获取给定用户的关注列表
-func (r Relation) FollowList(u *UserFollowerReq, userId string) (UserFollowerResp, error) {
+func (r Relation) FollowList(u *UserFollowerReq, visitorId int64) (UserFollowerResp, error) {
 	var uResp UserFollowerResp
+
 	
-	// 将 token 中的 userId 转为 int64
 	// visiterId 指代的是 token 的主人的 id
 	// 这里不排除 用户A 去看 用户B 的关注列表，所以需要在 用户B 所关注的人找出 用户A 也关注的对象？
 	// 在这里假定 用户A 为 token 的主人，而 用户B 为请求中的 user_id 的主人
-	visiterId, err := strconv.ParseInt(userId, 10, 64)
-	if err != nil {
-		log.Logger.Error("userId convert error")
-		return nil, err
-	}
+
 
 	// 获取 用户B 所关注的人的信息
 	rows, err := db.MySQL.Debug().Raw(sqlUserFollower, u.UserId).Rows()
@@ -176,7 +171,7 @@ func (r Relation) FollowList(u *UserFollowerReq, userId string) (UserFollowerRes
 
 	// 将 用户A/B 共同关注的人找出
 	for i := range uResp {
-		if isFollowed(visiterId, uResp[i].Id) {
+		if isFollowed(visitorId, uResp[i].Id) {
 			uResp[i].IsFollow = true
 		}
 	}

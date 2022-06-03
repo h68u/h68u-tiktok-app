@@ -61,15 +61,17 @@ func FollowList(c *gin.Context) {
 		return
 	}
 
-	userId, _ := c.Get("userId")
-	if userId.(string) == "" {
+	if req.Token == "" {
 		log.Logger.Error("operation illegal")
 		res.Error(c, res.PermissionErrorStatus)
 		return
 	}
 
+	t, _ := c.Get("userId")
+	userId := t.(int64)
+
 	var resp srv.UserFollowerResp
-	if resp, err = r.FollowList(&req, userId.(string)); err != nil {
+	if resp, err = r.FollowList(&req, userId); err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.FollowListErrorStatus.StatusCode,
 			StatusMsg:  res.FollowListErrorStatus.StatusMsg,

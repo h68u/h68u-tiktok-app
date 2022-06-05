@@ -36,9 +36,9 @@ minio:
 - **配置文件配置**
 ```
 minio:
-  endpoint: 120.55.94.208:9000
-  accessKeyID: admin
-  secretAccessKey: admin12345678
+  endpoint: 
+  accessKeyID: 
+  secretAccessKey: 
 ```
 
 # 2. [minio-go API文档](http://docs.minio.org.cn/docs/master/golang-client-api-reference#PutObject)

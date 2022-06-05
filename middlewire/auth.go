@@ -1,12 +1,15 @@
 package middlewire
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"tikapp/common/db"
 	"tikapp/common/log"
+	srv "tikapp/service"
 	"tikapp/util"
 	"time"
 )
@@ -167,9 +170,9 @@ func Auth() gin.HandlerFunc {
 			}
 
 			//转发路由携带新token
-			url := c.Request.URL.String()
-			split := strings.Split(url, "?") // eg.xxx:8080/api?a=1&b=2&token=xxx
-			pre := split[0] + "?"            // eg. xxx:8080/api
+			url1 := c.Request.URL.String()
+			split := strings.Split(url1, "?") // eg.xxx:8080/api?a=1&b=2&token=xxx
+			pre := split[0] + "?"             // eg. xxx:8080/api
 			for key, val := range dataMap {
 				pre = pre + key + "=" + val + "&"
 			} // eg.xxx:8080/api?a=1&b=2&token=xxx&
@@ -181,6 +184,36 @@ func Auth() gin.HandlerFunc {
 			c.Set("userId", userId)
 
 			// TODO 后台登录
+			req := srv.UserLoginReq{
+				Username: "",
+				Password: "",
+				Token:    accessToken,
+			}
+			data, err := json.MarshalIndent(&req, "", "\t")
+			if err != nil {
+				log.Logger.Error("json parse error")
+				c.Abort()
+				return
+			}
+			request, err := http.NewRequest("POST", "http://localhost:8090/douyin/user/login?", bytes.NewBuffer(data))
+			if err != nil {
+				log.Logger.Error("login move forward error")
+				c.Abort()
+				return
+			}
+			request.Header.Set("Content-Type", "application/json")
+			client := &http.Client{}
+			post, err := client.Do(request)
+			if post.StatusCode == 200 {
+				//发送登录请求成功
+				c.Set("userId", userId)
+				c.Next()
+				return
+			} else {
+				log.Logger.Error("login move forward error")
+				c.Abort()
+				return
+			}
 			// 要求下次请求更换url
 			//log.Logger.Debug("backend login start")
 			//ctrl.Login(c)

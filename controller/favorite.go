@@ -46,7 +46,7 @@ func FavoriteAction(c *gin.Context) {
 	switch req.ActionId{
 	case 1:
 		//点赞
-		 err := favorite.SetFavor(req.VideoId,req.UserId)
+		 err := favorite.FavorAction(req.VideoId,req.UserId)
 		if err != nil{
 
 			return 
@@ -56,7 +56,7 @@ func FavoriteAction(c *gin.Context) {
 		err = favorite.RemoveFavor(req.VideoId,req.UserId)
 		if err != nil{
 
-gi			return
+		return
 		}
 		
 	}

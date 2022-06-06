@@ -8,7 +8,8 @@ import (
 	"time"
 	"fmt"
 	"strconv"
-
+	"gorm.io/gorm"
+	
 )
 
 type VideoFavorite struct{}
@@ -36,7 +37,7 @@ type UserResponse struct {
 
 //后续设置context？需要加并行?
 //点赞操作
-func (favorite *VideoFavorite) SetFavor(videoId int64,userId int64) (error){
+func (favorite *VideoFavorite) FavorAction(videoId int64,userId int64) (error){
 	redis := db.Redis
 	defer redis.Close()
     //写入[videoID::useID]{create time}
@@ -46,9 +47,15 @@ func (favorite *VideoFavorite) SetFavor(videoId int64,userId int64) (error){
 		return err
 	}
 	//视频点赞数计数
-	_, err = redis.HIncrBy("FavoriteCount",string(videoId),1).Result()
+	_, err = redis.HIncrBy("FavoriteCount",strconv.FormatInt(videoId,10),1).Result()
 	if err != nil{
 		log.Logger.Error("add like num in redis error")
+		return err
+	}
+	//添加用户点赞的视频id
+	_, err = redis.SAdd(strconv.FormatInt(userId,10),strconv.FormatInt(videoId,10)).Result()
+	if err != nil{
+		log.Logger.Error("add user favor error")
 		return err
 	}
 	return nil
@@ -58,28 +65,23 @@ func (favorite *VideoFavorite) SetFavor(videoId int64,userId int64) (error){
 func (favorite *VideoFavorite)RemoveFavor(videoId int64,userId int64)(error){
 	redis := db.Redis
 	defer redis.Close()
-	_, err := redis.HDel("UserLikeVideo",util.Connect(videoId,userId)).Result()
+	_, err := redis.HSet("UserLikeVideo",util.Connect(videoId,userId), "0").Result()
 	if err !=nil{
 		log.Logger.Error("remove like in redis error")
 		return err
 	}
-	count, err:= redis.HGet("FavoriteCount",string(videoId)).Result()
-	if err != nil{
-		log.Logger.Error("get num in redis error")
+	_, err =redis.HIncrBy("FavoriteCount",strconv.FormatInt(videoId,10),-1).Result()
+	if err !=nil {
+		log.Logger.Error("redis error in set like num")
 		return err
 	}
-	coun, err := strconv.Atoi(count)
-	if err != nil{
-		log.Logger.Error("convert int error")
+
+	_, err = redis.SRem(strconv.FormatInt(userId,10),strconv.FormatInt(videoId,10)).Result()
+	if err !=nil {
+		log.Logger.Error("redis error in list")
 		return err
 	}
-	if coun > 0{
-		_, err :=redis.HIncrBy("FavoriteCount",string(videoId),-1).Result()
-		if err !=nil {
-			log.Logger.Error("redis error in set like num")
-			return err
-		}
-	}
+	
 	return 	nil
 }
 
@@ -142,4 +144,54 @@ func IsFavorite(userId int64, videoId int64)(bool,error)  {
 //定时更新redis和mysql,
 func RegularUpdate(){
 
+}
+func Updatefavoritecount()(error){
+	//更新点赞数
+	 all, err :=  db.Redis.HGetAll("FavoriteCount").Result()
+	 if err != nil{
+		log.Logger.Error("get all param in redis error")
+		return  err
+	 }
+	for videoId, count := range all{
+		if err :=db.MySQL.Begin().Debug().Model(&model.Video{}).
+			Where("id = ?", videoId).
+			Update("favorite_count", gorm.Expr("favorite_count + ?", count)).Error; err != nil {
+			db.MySQL.Begin().Rollback()
+			log.Logger.Error("mysql error in updating favorite_count")
+		return err
+		}
+	}
+   //更新点赞列表
+	all, err =  db.Redis.HGetAll("UserLikeVideo").Result()
+	if err != nil{
+	   log.Logger.Error("get all param in redis error")
+	   return  err
+	}
+	var favors model.VideoFavorite
+
+	for IdString, time := range all{
+		videoId, userId := util.Separate(IdString)
+		db.MySQL.Debug().
+		Model(&model.VideoFavorite{}).
+		Where("video_id = ? and user_id = ?", videoId, userId).
+		First(&favors)
+		if time != "0" && favors.CreateTime == 0{
+			favors = model.VideoFavorite{
+				UserId:     userId,
+				VideoId:    videoId,
+			}
+			if err := db.MySQL.Begin().Debug().Create(&favors).Error; err != nil {
+				log.Logger.Error("mysql error in doing follow action")
+				return err
+		}
+		
+	
+
+	}
+
+	}
+
+
+
+	return nil	
 }

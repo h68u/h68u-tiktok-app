@@ -56,7 +56,7 @@ func FavoriteAction(c *gin.Context) {
 		err = favorite.RemoveFavor(req.VideoId,req.UserId)
 		if err != nil{
 
-			return
+gi			return
 		}
 		
 	}

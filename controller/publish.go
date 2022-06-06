@@ -1,9 +1,9 @@
 package ctrl
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"strconv"
+	"github.com/unknwon/com"
+	"tikapp/common/log"
 	res "tikapp/common/result"
 	srv "tikapp/service"
 	"tikapp/util"
@@ -11,7 +11,8 @@ import (
 
 // PublishAction 已登录的用户上传视频
 func PublishAction(c *gin.Context) {
-	fmt.Println("进入publish")
+	log.Logger.Debug("进入publish")
+
 	userId, _ := c.Get("userId")
 	if userId == "" {
 		res.Error(c, res.Status{
@@ -20,9 +21,9 @@ func PublishAction(c *gin.Context) {
 		})
 		return
 	}
+
 	title := c.PostForm("title")
 	data, err := c.FormFile("data")
-
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.FileErrorStatus.StatusCode,
@@ -30,6 +31,7 @@ func PublishAction(c *gin.Context) {
 		})
 		return
 	}
+
 	var v srv.Video
 	err = v.PublishAction(data, title, userId.(int64))
 	if err != nil {
@@ -39,13 +41,14 @@ func PublishAction(c *gin.Context) {
 		})
 		return
 	}
+
 	res.Success(c, res.R{})
 }
 
 // PublishList 列出当前用户所有的投稿视频
 func PublishList(c *gin.Context) {
 	var myUserID int64
-	var targetUserID int
+	var targetUserID int64
 	var err error
 
 	token := c.Query("token")
@@ -53,7 +56,7 @@ func PublishList(c *gin.Context) {
 		myUserID, err = util.GetUserIDFormToken(token)
 	}
 
-	targetUserID, _ = strconv.Atoi(c.Query("user_id"))
+	targetUserID = com.StrTo(c.Query("user_id")).MustInt64()
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.TokenErrorStatus.StatusCode,
@@ -63,7 +66,7 @@ func PublishList(c *gin.Context) {
 	}
 
 	var v srv.Video
-	list, err := v.PublishList(myUserID, int64(targetUserID))
+	list, err := v.PublishList(myUserID, targetUserID)
 	if err != nil {
 		res.Error(c, res.Status{
 			StatusCode: res.PublishErrorStatus.StatusCode,
@@ -71,6 +74,7 @@ func PublishList(c *gin.Context) {
 		})
 		return
 	}
+
 	res.Success(c, res.R{
 		"video_list": list,
 	})

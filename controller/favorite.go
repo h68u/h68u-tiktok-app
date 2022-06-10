@@ -37,7 +37,6 @@ func FavoriteAction(c *gin.Context){
 		res.Error(c, res.PermissionErrorStatus)
 		return
 	}
-	//鉴权？
 	userId, _ := c.Get("userId")
 	// 请求参数错误
 	if req.ActionId != 0 && req.ActionId != 1 {
@@ -47,7 +46,6 @@ func FavoriteAction(c *gin.Context){
 		})
 		return
 	}
-
 	switch req.ActionId{
 	case 1:
 		//点赞
@@ -73,11 +71,7 @@ func FavoriteAction(c *gin.Context){
 		}
 		
 	}
-
-	res.Success1(c)
-
-	
-
+	res.Success1(c)	
 }
 
 // FavoriteList 获取登录用户的所有点赞视频
@@ -92,7 +86,7 @@ func FavoriteList(c *gin.Context) {
 		})
 		return
 	}
-	favorlist, err := favorite.FavorList(req.UserId)
+	favorlist, _ := favorite.FavorList(req.UserId)
 	res.Success(c, res.R{
 		"video_list": favorlist,
 	})

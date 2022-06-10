@@ -6,9 +6,8 @@ import (
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
-	"tikapp/util"
 	"time"
-
+	"sync"
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
@@ -77,7 +76,7 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	//最近活跃用户集合
 	err = rdb.SAdd("Users", strconv.FormatInt(userId, 10)).Err()
 	if err != nil {
-		log.Logger.Error("add user  error")
+		log.Logger.Error("add user error")
 		return err
 	}
 	return nil
@@ -116,8 +115,12 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 //获取点赞列表
 func (favorite *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	var favors []model.VideoFavorite
-
 	//更新数据库，删除redis
+	var mu sync.Mutex
+	mu.Lock()
+	UpdateMysql()
+	DeleteRedis()
+	mu.Unlock()
 	result := db.MySQL.Debug().Where("user_id = ?", userId).Preload("User", "Video").Order("CreateTime desc").Find(&favors)
 	fmt.Println(result)
 	resp := UpdateListResp(favors)
@@ -134,7 +137,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollowByVideoId(favor.User.Id, favor.VideoId), //未完成是否关注
+			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), //未完成是否关注
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,
@@ -155,27 +158,32 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 func IsFavorite(userId int64, videoId int64) (bool, error) {
 	rdb := db.Redis
 	defer rdb.Close()
-	is, err := rdb.HExists("UserLikeVideo", util.Connect(videoId, userId)).Result()
+	log.Logger.Error("isfavorite can not be known ")
+	var count int64
+	err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Count(&count).Error
 	if err != nil {
-		log.Logger.Error("isfavorite can not be known ")
-		var count int64
-		err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Count(&count).Error
-		if err != nil {
-			log.Logger.Error("mysql happen error when check favorite")
-			return false, err
-		}
-		if count == 1 {
-			return true, nil
-		}
+		log.Logger.Error("mysql happen error when check favorite")
+		return false, err
 	}
-	return is, nil
+	if count == 1 {
+		return true, nil
+	}
+	return false, nil
 }
 
 //定时更新redis和mysql,
-func RegularUpdate() {
-
+func RegularUpdate()(error){
+	var mu sync.Mutex
+	go func(){
+		time.Sleep(time.Minute*5)
+		mu.Lock()
+		defer mu.Unlock()
+		UpdateMysql()
+		DeleteRedis()
+	}()
+	return nil
 }
-func UpdateMysql() error {
+func UpdateMysql()(error){
 	//更新点赞数
 	all, err := db.Redis.HGetAll("FavoriteCount").Result()
 	if err != nil {
@@ -224,10 +232,31 @@ func UpdateMysql() error {
 			}
 		}
 	}
-
 	return nil
 }
 func DeleteRedis()(error){
 	//视频点赞计数可以直接删除
-	
+	err := db.Redis.Del("FavoriteCount").Err()
+	if err != nil{
+		log.Logger.Error("delete redis error")
+		return err
+	}
+	users, err := db.Redis.SMembers("Users").Result()
+	if err != nil {
+		log.Logger.Error("get all param in redis error")
+		return err
+	}
+	for _, userId := range users {
+		err = db.Redis.Del(userId).Err()
+		if err != nil{
+			log.Logger.Error("delete redis error")
+			return err
+		}
+	}
+	err = db.Redis.Del("Users").Err()
+	if err != nil{
+		log.Logger.Error("delete redis error")
+		return err
+	}
+	return nil
 }

@@ -1,15 +1,17 @@
 package srv
 
 import (
+	"context"
 	"errors"
-	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
 	"tikapp/util"
 	"time"
+
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -78,7 +80,7 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 
 	// key: 2h token; value 30d token; key live time: 30d
 
-	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+	if err := db.Redis.Set(context.Background(), token, refreshToken, 30*24*time.Hour).Err(); err != nil {
 		log.Logger.Error("redis set error", zap.Error(err))
 		return nil, err
 	} else {
@@ -138,7 +140,7 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	}
 
 	// key: 2h token; value 30d token; key live time: 30d
-	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+	if err := db.Redis.Set(context.Background(), token, refreshToken, 30*24*time.Hour).Err(); err != nil {
 		log.Logger.Error("redis set error", zap.Error(err))
 		return nil, err
 	} else {

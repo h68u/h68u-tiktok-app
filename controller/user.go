@@ -2,7 +2,9 @@ package ctrl
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
+	"tikapp/common/log"
 	res "tikapp/common/result"
 	srv "tikapp/service"
 	"tikapp/util"
@@ -47,15 +49,17 @@ func Info(c *gin.Context) {
 	targetUserID, _ := strconv.Atoi(c.Query("user_id"))
 	token := c.Query("token")
 
-	// 通过token获取当前用户ID，如果是游客（token为空），则当前用户ID为0
+	// 通过token获取当前用户ID，如果是游客（token为空），当前用户ID为0
 	if token != "" {
-		myUserID, err = util.GetUserIDFormToken(token)
-		if err != nil {
+		// 使用c.Get() 获取token的uid
+		if uid, exist := c.Get("userId"); uid == "" && !exist {
 			res.Error(c, res.Status{
 				StatusCode: res.TokenErrorStatus.StatusCode,
 				StatusMsg:  "token error",
 			})
 			return
+		} else {
+			myUserID = uid.(int64)
 		}
 	}
 
@@ -77,6 +81,22 @@ func Info(c *gin.Context) {
 
 // Login 用户登录
 func Login(c *gin.Context) {
+	// 后台登录（解决redis刷新token）
+	// TODO 解决替换问题
+	token := c.Query("token")
+	if token != "" {
+		// 后台登录 默认没有问题
+		var data srv.UserLoginResp
+		data.UserId, _ = util.GetUserIDFormToken(token)
+		data.Token = token
+		log.Logger.Info("backend login msg", zap.Any("request", data))
+		res.Success(c, res.R{
+			"user_id": data.UserId,
+			"token":   data.Token,
+		})
+		return
+	}
+	// 非后台登录
 	var u srv.User
 	login, err := u.Login(c)
 	if err != nil {
@@ -86,6 +106,7 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+
 	data := login.(srv.UserLoginResp)
 	res.Success(c, res.R{
 		"user_id": data.UserId,

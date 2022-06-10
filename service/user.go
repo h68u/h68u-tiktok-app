@@ -17,8 +17,8 @@ import (
 
 type User struct{}
 type UserLoginReq struct {
-	Username string `form:"username"`
-	Password string `form:"password"`
+	Username string `form:"username" binding:"required,min=1,max=32"`
+	Password string `form:"password" binding:"required,min=1,max=32"`
 }
 
 type UserLoginResp struct {
@@ -38,6 +38,7 @@ type UserRegisterResp struct {
 
 func (u User) Login(c *gin.Context) (interface{}, error) {
 	var req UserLoginReq
+	var token string
 
 	// 解析参数
 	err := c.ShouldBindWith(&req, binding.Query)
@@ -60,7 +61,7 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	}
 
 	// acc token: 2h
-	token, err := util.CreateAccessToken(user.Id)
+	token, err = util.CreateAccessToken(user.Id)
 	if err != nil {
 		log.Logger.Error("create access token error")
 		return nil, err
@@ -76,7 +77,13 @@ func (u User) Login(c *gin.Context) (interface{}, error) {
 	//c.Header("token", token) // 不需要了
 
 	// key: 2h token; value 30d token; key live time: 30d
-	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+
+	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+		log.Logger.Error("redis set error", zap.Error(err))
+		return nil, err
+	} else {
+		log.Logger.Debug("redis set success")
+	}
 
 	return UserLoginResp{
 		UserId: user.Id,
@@ -131,7 +138,12 @@ func (u User) Register(c *gin.Context) (interface{}, error) {
 	}
 
 	// key: 2h token; value 30d token; key live time: 30d
-	db.Redis.Set(token, refreshToken, 30*24*time.Hour)
+	if err := db.Redis.Set(token, refreshToken, 30*24*time.Hour).Err(); err != nil {
+		log.Logger.Error("redis set error", zap.Error(err))
+		return nil, err
+	} else {
+		log.Logger.Debug("redis set success")
+	}
 
 	return UserRegisterResp{
 		UserId: user.Id,

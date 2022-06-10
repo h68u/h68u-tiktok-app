@@ -19,7 +19,7 @@ var (
 	FileErrorStatus         = newStatus(40007, "文件上传失败")
 	PublishErrorStatus      = newStatus(40008, "发布时出现错误")
 	FeedErrorStatus         = newStatus(40009, "获取视频流出错")
-	// EmptyErrorStatus        = newStatus(40010, "用户名或密码为空")
+	EmptyErrorStatus        = newStatus(40010, "用户名或密码为空") // should be useless
 	FollowErrorStatus       = newStatus(40011, "关注失败")
 	FavoriteErrorStatus     = newStatus(40012, "点赞失败")
 	FollowListErrorStatus   = newStatus(40013, "获取关注列表时发生了错误")

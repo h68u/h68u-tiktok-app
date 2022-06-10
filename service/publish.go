@@ -91,6 +91,5 @@ func (v Video) PublishList(myUserID, targetUserID int64) ([]VideoDemo, error) {
 		}
 		videos = append(videos, video)
 	}
-
 	return videos, nil
 }

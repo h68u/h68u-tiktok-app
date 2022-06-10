@@ -51,7 +51,6 @@ type UserResponse struct {
 //点赞操作
 func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	rdb := db.Redis
-	defer rdb.Close()
 	/*
 		//写入[videoID::useID]{create time}
 		_, err := redis.HSet("UserLikeVideo", util.Connect(videoId, userId), time.Now().Unix()).Result()
@@ -85,7 +84,6 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 //取消赞
 func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 	rdb := db.Redis
-	defer rdb.Close()
 	/*
 		err := rdb.HSet("UserLikeVideo",util.Connect(videoId,userId), "0").Err()
 		if err !=nil{
@@ -157,7 +155,6 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 //判断是否点赞
 func IsFavorite(userId int64, videoId int64) (bool, error) {
 	rdb := db.Redis
-	defer rdb.Close()
 	log.Logger.Error("isfavorite can not be known ")
 	var count int64
 	err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Count(&count).Error

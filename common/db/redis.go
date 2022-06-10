@@ -13,7 +13,7 @@ func RedisInit() {
 		Addr:     config.RedisCfg.Host,
 		Password: config.RedisCfg.Password,
 		DB:       0,
-		IdleTimeout: -1,
+		IdleTimeout: config.RedisCfg.IdleTimeOut,
 	})
 	if _, err := Redis.Ping().Result(); err != nil {
 		logrus.Panic("connect redis failed: %v", err)

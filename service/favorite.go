@@ -1,16 +1,18 @@
 package srv
 
 import (
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 	"strconv"
+	"sync"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
 	"time"
-	"sync"
-	"github.com/go-redis/redis"
-	"gorm.io/gorm"
 )
+
 /*
 点赞行为：
 	redis:视频点赞数(hash)加1的;在用户id（key)的zset中添加点赞视频id（按照添加时间排序）;添加最近活跃过用户的id的set
@@ -62,19 +64,19 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	*/
 
 	//视频点赞数计数
-	err := rdb.HIncrBy("FavoriteCount", strconv.FormatInt(videoId, 10), 1).Err()
+	err := rdb.HIncrBy(context.Background(),"FavoriteCount", strconv.FormatInt(videoId, 10), 1).Err()
 	if err != nil {
 		log.Logger.Error("add like num in redis error")
 		return err
 	}
 	//添加用户点赞的视频id
-	err = rdb.ZAdd(strconv.FormatInt(userId, 10), redis.Z{Score: float64(time.Now().Unix()), Member: videoId}).Err()
+	err = rdb.ZAdd(context.Background(),strconv.FormatInt(userId, 10), &redis.Z{Score: float64(time.Now().Unix()), Member: videoId}).Err()
 	if err != nil {
 		log.Logger.Error("add user favor error")
 		return err
 	}
 	//最近活跃用户集合
-	err = rdb.SAdd("Users", strconv.FormatInt(userId, 10)).Err()
+	err = rdb.SAdd(context.Background(),"Users", strconv.FormatInt(userId, 10)).Err()
 	if err != nil {
 		log.Logger.Error("add user error")
 		return err
@@ -93,18 +95,18 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 			return err
 		}
 	*/
-	err := rdb.HIncrBy("FavoriteCount", strconv.FormatInt(videoId, 10), -1).Err()
+	err := rdb.HIncrBy(context.Background(),"FavoriteCount", strconv.FormatInt(videoId, 10), -1).Err()
 	if err != nil {
 		log.Logger.Error("redis error in set like num")
 		return err
 	}
 
-	err = rdb.ZAdd(strconv.FormatInt(userId, 10), redis.Z{Score: float64(0), Member: videoId}).Err()
+	err = rdb.ZAdd(context.Background(),strconv.FormatInt(userId, 10), &redis.Z{Score: float64(0), Member: videoId}).Err()
 	if err != nil {
 		log.Logger.Error("redis error in list")
 		return err
 	}
-	err = rdb.SAdd("Users", strconv.FormatInt(userId, 10)).Err()
+	err = rdb.SAdd(context.Background(),"Users", strconv.FormatInt(userId, 10)).Err()
 	if err != nil {
 		log.Logger.Error("add user  error")
 		return err
@@ -172,10 +174,10 @@ func IsFavorite(userId int64, videoId int64) (bool, error) {
 }
 
 //定时更新redis和mysql,
-func RegularUpdate()(error){
+func RegularUpdate() error {
 	var mu sync.Mutex
-	go func(){
-		time.Sleep(time.Minute*5)
+	go func() {
+		time.Sleep(time.Minute * 5)
 		mu.Lock()
 		defer mu.Unlock()
 		UpdateMysql()
@@ -183,9 +185,9 @@ func RegularUpdate()(error){
 	}()
 	return nil
 }
-func UpdateMysql()(error){
+func UpdateMysql() error {
 	//更新点赞数
-	all, err := db.Redis.HGetAll("FavoriteCount").Result()
+	all, err := db.Redis.HGetAll(context.Background(),"FavoriteCount").Result()
 	if err != nil {
 		log.Logger.Error("get all param in redis error")
 		return err
@@ -200,7 +202,7 @@ func UpdateMysql()(error){
 		}
 	}
 	//更新点赞列表
-	users, err := db.Redis.SMembers("Users").Result()
+	users, err := db.Redis.SMembers(context.Background(), "Users").Result()
 	if err != nil {
 		log.Logger.Error("get all param in redis error")
 		return err
@@ -208,7 +210,7 @@ func UpdateMysql()(error){
 	var favors model.VideoFavorite
 
 	for _, userId := range users {
-		videoIds, err := db.Redis.ZRange(userId, 0, -1).Result()
+		videoIds, err := db.Redis.ZRange(context.Background(),userId, 0, -1).Result()
 		if err != nil {
 			log.Logger.Error("get videoId in redis error")
 			return err
@@ -234,27 +236,27 @@ func UpdateMysql()(error){
 	}
 	return nil
 }
-func DeleteRedis()(error){
+func DeleteRedis() error {
 	//视频点赞计数可以直接删除
-	err := db.Redis.Del("FavoriteCount").Err()
-	if err != nil{
+	err := db.Redis.Del(context.Background(), "FavoriteCount").Err()
+	if err != nil {
 		log.Logger.Error("delete redis error")
 		return err
 	}
-	users, err := db.Redis.SMembers("Users").Result()
+	users, err := db.Redis.SMembers(context.Background(), "Users").Result()
 	if err != nil {
 		log.Logger.Error("get all param in redis error")
 		return err
 	}
 	for _, userId := range users {
-		err = db.Redis.Del(userId).Err()
-		if err != nil{
+		err = db.Redis.Del(context.Background(), userId).Err()
+		if err != nil {
 			log.Logger.Error("delete redis error")
 			return err
 		}
 	}
-	err = db.Redis.Del("Users").Err()
-	if err != nil{
+	err = db.Redis.Del(context.Background(),"Users").Err()
+	if err != nil {
 		log.Logger.Error("delete redis error")
 		return err
 	}

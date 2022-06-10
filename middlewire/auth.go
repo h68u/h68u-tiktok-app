@@ -2,14 +2,16 @@ package middlewire
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"net/http"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/util"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // Auth 鉴权接口
@@ -55,7 +57,7 @@ func Auth() gin.HandlerFunc {
 			log.Logger.Info("valid refreshToken")
 
 			// 30d token 能否取出
-			value := db.Redis.Get(token)
+			value := db.Redis.Get(context.Background(), token)
 			refreshToken, err := value.Result()
 			if err != nil {
 				// debug
@@ -76,7 +78,7 @@ func Auth() gin.HandlerFunc {
 				log.Logger.Debug("valid refreshToken err:", zap.Error(err))
 				//refreshToken出问题，表明用户三十天未登录，需要重新登录
 				log.Logger.Info("user need login again")
-				db.Redis.Del(token)
+				db.Redis.Del(context.Background(), token)
 				c.Set("userId", "")
 				c.Next()
 				return
@@ -105,7 +107,7 @@ func Auth() gin.HandlerFunc {
 				panic(err)
 			}
 
-			if err := db.Redis.Set(token, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
+			if err := db.Redis.Set(context.Background(), token, newRefreshToken, 30*24*time.Hour).Err(); err != nil {
 				log.Logger.Error("create redis acc token error", zap.Error(err))
 			} else {
 				log.Logger.Debug("redis set success")

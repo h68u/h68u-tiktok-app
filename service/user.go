@@ -19,7 +19,6 @@ type User struct{}
 type UserLoginReq struct {
 	Username string `form:"username" binding:"required,min=1,max=32"`
 	Password string `form:"password" binding:"required,min=1,max=32"`
-	Token    string `form:"token" binding:"required"`
 }
 
 type UserLoginResp struct {

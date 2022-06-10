@@ -24,7 +24,7 @@
   - log/ 日志配置
   - model/ 数据表
   - oss/ OSS，配置了 minio 和 aliyun 两种
-  - result/ 规范了全局的错误发和返回值
+  - result/ 规范了全局的错误码和返回值
 - controller/ 控制层实现
 - doc/ 存放项目文档
   - imgs/ 存放文档所需的图片

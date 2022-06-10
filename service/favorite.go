@@ -12,7 +12,21 @@ import (
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
-
+/*
+点赞行为：
+	redis:视频点赞数(hash)加1的;在用户id（key)的zset中添加点赞视频id（按照添加时间排序）;添加最近活跃过用户的id的set
+取消赞行为：
+redis:视频点赞数(hash)减1；在用户id（key)的zset中把点赞视频id对应的时间设置为0；添加最近活跃的用户的id的set
+获取点赞列表：
+	（方案1：从redis中获取点赞视频。方案2：还是先更新mysql,再删掉redis）,从mysql中获取点赞视频，按照时间排序的
+更新mysql:
+   更新点赞数：读取redis中视频点赞数（可以为负数），将其与mysql中的Video中的点赞数相加
+   更新点赞列表：对于mysql中没有的点赞列表，根据set和zset按顺序添加。对于应该删除的点赞，根据活跃用户set和score为0的zset对数据库删除
+删除redis:
+	在更新mysql后全部删除，应该两者组成原子操作。
+定时任务：
+	以一个待定时间间隔（5分钟？）执行更新mysql和删除redis操作（应该组成原子操作）
+*/
 type VideoFavorite struct{}
 
 type VideoResp struct {
@@ -60,7 +74,7 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 		log.Logger.Error("add user favor error")
 		return err
 	}
-	//最近点赞过用户集合
+	//最近活跃用户集合
 	err = rdb.SAdd("Users", strconv.FormatInt(userId, 10)).Err()
 	if err != nil {
 		log.Logger.Error("add user  error")
@@ -86,18 +100,24 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 		return err
 	}
 
-	err = rdb.ZRem(strconv.FormatInt(userId, 10), videoId).Err()
+	err = rdb.ZAdd(strconv.FormatInt(userId, 10), redis.Z{Score: float64(0), Member: videoId}).Err()
 	if err != nil {
 		log.Logger.Error("redis error in list")
 		return err
 	}
-
+	err = rdb.SAdd("Users", strconv.FormatInt(userId, 10)).Err()
+	if err != nil {
+		log.Logger.Error("add user  error")
+		return err
+	}
 	return nil
 }
 
 //获取点赞列表
 func (favorite *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	var favors []model.VideoFavorite
+
+	//更新数据库，删除redis
 	result := db.MySQL.Debug().Where("user_id = ?", userId).Preload("User", "Video").Order("CreateTime desc").Find(&favors)
 	fmt.Println(result)
 	resp := UpdateListResp(favors)
@@ -155,7 +175,7 @@ func IsFavorite(userId int64, videoId int64) (bool, error) {
 func RegularUpdate() {
 
 }
-func UpdateDbFavorite() error {
+func UpdateMysql() error {
 	//更新点赞数
 	all, err := db.Redis.HGetAll("FavoriteCount").Result()
 	if err != nil {
@@ -206,4 +226,8 @@ func UpdateDbFavorite() error {
 	}
 
 	return nil
+}
+func DeleteRedis()(error){
+	//视频点赞计数可以直接删除
+	
 }

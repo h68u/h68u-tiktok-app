@@ -6,29 +6,36 @@ import (
 )
 
 var (
-	SuccessStatus           = newStatus(200, "success")
-	LoginErrorStatus        = newStatus(400, "login happen error")
-	RegisterErrorStatus     = newStatus(401, "register happen error")
-	UsernameExitErrorStatus = newStatus(402, "username already exists")
-	TokenErrorStatus        = newStatus(403, "token error")
-	InfoErrorStatus         = newStatus(404, "can't get user info")
-	NoLoginErrorStatus      = newStatus(405, "user no login")
-	FileErrorStatus         = newStatus(406, "upload file error")
-	PublishErrorStatus      = newStatus(407, "publish error")
+	// 200 OK
+	SuccessStatus = newStatus(200, "success")
 
-	FeedErrorStatus = newStatus(409, "feed error")
+	// 400 BAD
+	QueryParamErrorStatus   = newStatus(40001, "请求的参数错误")
+	LoginErrorStatus        = newStatus(40002, "登录发生错误")
+	RegisterErrorStatus     = newStatus(40003, "注册发生错误")
+	UsernameExitErrorStatus = newStatus(40004, "用户名已存在")
+	TokenErrorStatus        = newStatus(40005, "token 错误")
+	InfoErrorStatus         = newStatus(40006, "无法获取该用户信息")
+	FileErrorStatus         = newStatus(40007, "文件上传失败")
+	PublishErrorStatus      = newStatus(40008, "发布时出现错误")
+	FeedErrorStatus         = newStatus(40009, "获取视频流出错")
+	EmptyErrorStatus        = newStatus(40010, "用户名或密码为空") // should be useless
+	FollowErrorStatus       = newStatus(40011, "关注失败")
+	FavoriteErrorStatus     = newStatus(40012, "点赞失败")
+	FollowListErrorStatus   = newStatus(40013, "获取关注列表时发生了错误")
 
-	EmptyErrorStatus = newStatus(408, "username or password is empty")
+	// 401 WITHOUT PERMISSION
+	NoLoginErrorStatus = newStatus(40101, "用户未登录")
 
-	QueryParamErrorStatus     = newStatus(409, "query param error")
-	PermissionErrorStatus     = newStatus(410, "permission error")
-	CommentNotExitErrorStatus = newStatus(411, "comment not found")
-	VideoNotExitErrorStatus   = newStatus(412, "video not found")
-	FollowErrorStatus         = newStatus(413, "follow error")
-	FavoriteErrorStatus       = newStatus(414, "favorite error")
-	FollowListErrorStatus     = newStatus(415, "get follow list failed")
+	// 403 ILLEGAL OPERATION
+	PermissionErrorStatus = newStatus(40301, "操作非法")
 
-	ServerErrorStatus = newStatus(500, "server error")
+	// 404 NOT FOUND
+	CommentNotExitErrorStatus = newStatus(40401, "评论不存在")
+	VideoNotExitErrorStatus   = newStatus(40402, "视频不存在")
+
+	// 500 INTERNAL ERROR
+	ServerErrorStatus = newStatus(50001, "服务器内部错误")
 )
 
 type Status struct {

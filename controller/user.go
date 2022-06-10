@@ -83,7 +83,7 @@ func Info(c *gin.Context) {
 func Login(c *gin.Context) {
 	// 后台登录（解决redis刷新token）
 	// TODO 解决替换问题
-	token := c.PostForm("token")
+	token := c.Query("token")
 	if token != "" {
 		// 后台登录 默认没有问题
 		var data srv.UserLoginResp

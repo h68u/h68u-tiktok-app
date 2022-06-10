@@ -2,7 +2,6 @@ package db
 
 import (
 	"tikapp/common/config"
-	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"

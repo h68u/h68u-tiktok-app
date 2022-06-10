@@ -7,28 +7,28 @@ import (
 
 var (
 	SuccessStatus           = newStatus(200, "success")
-	LoginErrorStatus        = newStatus(400, "login happen error")
-	RegisterErrorStatus     = newStatus(401, "register happen error")
-	UsernameExitErrorStatus = newStatus(402, "username already exists")
-	TokenErrorStatus        = newStatus(403, "token error")
-	InfoErrorStatus         = newStatus(404, "can't get user info")
-	NoLoginErrorStatus      = newStatus(405, "user no login")
-	FileErrorStatus         = newStatus(406, "upload file error")
-	PublishErrorStatus      = newStatus(407, "publish error")
+	LoginErrorStatus        = newStatus(400, "登录发生错误")
+	RegisterErrorStatus     = newStatus(401, "注册发生错误")
+	UsernameExitErrorStatus = newStatus(402, "用户名已存在")
+	TokenErrorStatus        = newStatus(403, "token 错误")
+	InfoErrorStatus         = newStatus(404, "无法获取该用户信息")
+	NoLoginErrorStatus      = newStatus(405, "用户未登录")
+	FileErrorStatus         = newStatus(406, "文件上传失败")
+	PublishErrorStatus      = newStatus(407, "发布时出现错误")
 
-	FeedErrorStatus = newStatus(409, "feed error")
+	FeedErrorStatus = newStatus(409, "获取视频流出错")
 
-	EmptyErrorStatus = newStatus(408, "username or password is empty")
+	EmptyErrorStatus = newStatus(408, "用户名或密码为空")
 
-	QueryParamErrorStatus     = newStatus(409, "query param error")
+	QueryParamErrorStatus     = newStatus(409, "请求的参数错误")
 	PermissionErrorStatus     = newStatus(410, "permission error")
-	CommentNotExitErrorStatus = newStatus(411, "comment not found")
-	VideoNotExitErrorStatus   = newStatus(412, "video not found")
-	FollowErrorStatus         = newStatus(413, "follow error")
-	FavoriteErrorStatus       = newStatus(414, "favorite error")
-	FollowListErrorStatus     = newStatus(415, "get follow list failed")
+	CommentNotExitErrorStatus = newStatus(411, "评论不存在")
+	VideoNotExitErrorStatus   = newStatus(412, "视频不存在")
+	FollowErrorStatus         = newStatus(413, "关注失败")
+	FavoriteErrorStatus       = newStatus(414, "点赞失败")
+	FollowListErrorStatus     = newStatus(415, "获取关注列表时发生了错误")
 
-	ServerErrorStatus = newStatus(500, "server error")
+	ServerErrorStatus = newStatus(500, "服务器内部错误")
 )
 
 type Status struct {

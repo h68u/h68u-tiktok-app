@@ -137,7 +137,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), //未完成是否关注
+			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id),
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,
@@ -213,11 +213,28 @@ func UpdateMysql() error {
 			return err
 		}
 		for _, videoId := range videoIds {
+			time, err := db.Redis.ZScore(context.Background(), userId, videoId).Result()
+			if err != nil {
+				log.Logger.Error("get time in redis error")
+				return err
+			}
+			if time == 0 {
+				videoId, _ := strconv.ParseInt(videoId, 10, 64)
+				userId, _ := strconv.ParseInt(userId, 10, 64)
+				favors = model.VideoFavorite{
+					UserId:  userId,
+					VideoId: videoId,
+				}
+				if err := db.MySQL.Begin().Debug().Delete(&favors).Error; err != nil {
+					log.Logger.Error("mysql error in doing remove action")
+					return err
+				}
+			}
 			db.MySQL.Debug().
 				Model(&model.VideoFavorite{}).
 				Where("video_id = ? and user_id = ?", videoId, userId).
 				First(&favors)
-			if favors.CreateTime == 0 {
+			if favors.CreateTime == 0 && time != 0 {
 				videoId, _ := strconv.ParseInt(videoId, 10, 64)
 				userId, _ := strconv.ParseInt(userId, 10, 64)
 				favors = model.VideoFavorite{
@@ -225,7 +242,7 @@ func UpdateMysql() error {
 					VideoId: videoId,
 				}
 				if err := db.MySQL.Begin().Debug().Create(&favors).Error; err != nil {
-					log.Logger.Error("mysql error in doing follow action")
+					log.Logger.Error("mysql error in doing favor action")
 					return err
 				}
 			}

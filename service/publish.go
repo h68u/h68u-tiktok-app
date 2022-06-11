@@ -1,8 +1,11 @@
 package srv
 
 import (
+	"bytes"
 	"errors"
+	"github.com/h2non/filetype"
 	"github.com/sirupsen/logrus"
+	"io"
 	"mime/multipart"
 	"tikapp/common/db"
 	"tikapp/common/model"
@@ -27,6 +30,15 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 
 		}
 	}(file)
+
+	// 判断是否为视频
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		return err
+	}
+	if filetype.IsVideo(buf.Bytes()) == false {
+		return errors.New("not a video")
+	}
 
 	// 存储到oss
 	ok, err := oss.UploadVideoToOss(BucketName, data.Filename, file)

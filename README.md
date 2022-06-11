@@ -20,6 +20,7 @@
     - logs/ 存放项目运行时日志
 - common/ 
   - config/ 项目的配置读取
+  - cron/ 定时任务
   - db/ 数据库支持
   - log/ 日志配置
   - model/ 数据表

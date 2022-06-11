@@ -20,7 +20,7 @@ import (
 type User struct{}
 type UserLoginReq struct {
 	Username string `form:"username" binding:"required,min=1,max=32"`
-	Password string `form:"password" binding:"required,min=1,max=32"`
+	Password string `form:"password" binding:"required,min=6,max=32"`
 }
 
 type UserLoginResp struct {
@@ -30,7 +30,7 @@ type UserLoginResp struct {
 
 type UserRegisterReq struct {
 	Username string `form:"username" binding:"required,min=1,max=32"`
-	Password string `form:"password" binding:"required,min=5,max=32"`
+	Password string `form:"password" binding:"required,min=6,max=32"`
 }
 
 type UserRegisterResp struct {

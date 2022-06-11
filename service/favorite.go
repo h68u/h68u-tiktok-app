@@ -39,14 +39,6 @@ type UserResponse struct {
 func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	rdb := db.Redis
 	logrus.Info("videoId: ", videoId, " userId: ", userId)
-	/*
-		//写入[videoID::useID]{create time}
-		_, err := redis.HSet("UserLikeVideo", util.Connect(videoId, userId), time.Now().Unix()).Result()
-		if err != nil {
-			log.Logger.Error("set like time in redis error")
-			return err
-		}
-	*/
 	latestFlag, err := rdb.HGet(context.Background(), "FavoriteHash", util.Connect(videoId, userId)).Result()
 	if err != nil {
 		log.Logger.Error("get favorite latestFlag failed")
@@ -99,59 +91,62 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 }
 
 //获取点赞列表
-func (favorite *VideoFavorite) FavorList(userId int64) (interface{}, error) {
+func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	logrus.Info("starting favorites...")
-	var favors []model.VideoFavorite
-	//var ans []UserDemo
-	////var followInTable model.Follow
-	//rows, err := db.MySQL.Debug().Table("viedeo_favorite").
-	//	Select("video_id").
-	//	Where("user_id = ?", userId).
-	//	Rows()
-	//if err != nil {
-	//	logrus.Error("msql get favorite failed")
-	//	return nil, err
-	//}
-	//defer func() {
-	//	_ = rows.Close()
-	//}()
-	//
-	////逐个处理每个信息
-	//for rows.Next() {
-	//	var viedeo VideoResp  // 因为Info方法是User结构体的方法
-	//	var fansId int64      //要从粉丝表中获取的粉丝id
-	//	var fansInfo UserDemo //粉丝信息
-	//
-	//	err := rows.Scan(&fansId)
-	//	if err != nil {
-	//		log.Logger.Error("mysql error in writing in fansId")
-	//		return nil, err
-	//	}
-	//
-	//	fansInfo, err = u.Info(userId, fansId)
-	//	if err != nil {
-	//		log.Logger.Error("get userInfo err")
-	//		return nil, err
-	//	}
-	//
-	//	ans = append(ans, fansInfo)
-	//
-	//}
-	//
-	//return ans, nil
-	//更新数据库，删除redis
-	//var mu sync.Mutex
-	//mu.Lock()
 	err := UpdateMysql()
 	if err != nil {
 		logrus.Error("update favorite failed", err)
 		return nil, err
 	}
-	DeleteRedis()
-	//mu.Unlock()
-	logrus.Info("favors:", favors)
-	resp := UpdateListResp(favors)
-	return resp, nil
+	// 获取目标用户发布的视频
+	var videos []model.VideoFavorite
+
+	var res []VideoResp
+	err = db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Find(&videos).Error
+	if err != nil {
+		logrus.Error("mysql happen error when find video in table", err)
+		return nil, err
+	}
+	logrus.Info("videos", videos)
+	for _, video := range videos {
+		var videoInTable model.Video
+		//将表中的信息填到videos中，并补充其他信息
+		logrus.Info("videoid: ", video.VideoId)
+		err := db.MySQL.Model(&model.Video{}).Where("id = ?", video.VideoId).First(&videoInTable).Error
+		if err != nil {
+			logrus.Error("mysql happen error when find video in table: ", err)
+			return nil, err
+		}
+		logrus.Info("videoInTable", videoInTable)
+		tempvideo := VideoResp{
+			Id:            videoInTable.Id,
+			PlayUrl:       videoInTable.PlayUrl,
+			CoverUrl:      videoInTable.CoverUrl,
+			FavoriteCount: videoInTable.FavoriteCount,
+			CommentCount:  videoInTable.CommentCount,
+			Title:         videoInTable.Title,
+		}
+		tempfavorite, _ := IsFavorite(userId, video.UserId)
+		tempvideo.IsFavorite = tempfavorite
+		//获取作者信息
+		var tempuser model.User
+		err = db.MySQL.Model(&model.User{}).Where("id = ?", userId).First(&tempuser).Error
+		userRes := UserResponse{
+			Id:            tempuser.Id,
+			Name:          tempuser.Name,
+			FollowCount:   tempuser.FollowCount,
+			FollowerCount: tempuser.FollowerCount,
+			IsFollow:      isFollowed(userId, tempuser.Id),
+		}
+		tempvideo.Author = userRes
+		if err != nil {
+			logrus.Error("mysql happen error when query user info")
+			return nil, err
+		}
+		res = append(res, tempvideo)
+	}
+
+	return res, nil
 }
 func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 	resp := make([]VideoResp, 0, len(favors))
@@ -219,7 +214,8 @@ func UpdateMysql() error {
 		logrus.Error("get pairs failed", err)
 		return err
 	}
-	logrus.Info("Update starting2...")
+	logrus.Info("pairs", pairs)
+
 	for pair, flag := range pairs {
 		logrus.Info("Update starting3...")
 		videoId, userId := util.Separate(pair)
@@ -229,20 +225,22 @@ func UpdateMysql() error {
 		favors.VideoId = videoId
 		logrus.Info(userId, videoId, flag)
 		if flag == "1" {
+			// TODO: 删除操作
 			// 更新点赞表
 			// 先删除，再添加
-			//err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", videoId, userId).Delete().Error
-			//if err != nil {
-			//	logrus.Error("update video favorite_count failed", err)
-			//	return err
-			//}
+			err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Delete(&model.VideoFavorite{}).Error
+			if err != nil {
+				logrus.Error("update video favorite_count failed", err)
+				return err
+			}
 			if err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Create(&favors).Error; err != nil {
 				logrus.Error("mysql error in creating video favorite")
 			}
+			logrus.Info("update video_favorite success")
 		} else if flag == "0" {
-			//if err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", videoId, userId).Delete(&VideoFavorite{}).Error; err != nil {
-			//	logrus.Error("mysql error in deleting video favorite")
-			//}
+			if err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Delete(&model.VideoFavorite{}).Error; err != nil {
+				logrus.Error("mysql error in deleting video favorite")
+			}
 		}
 		// 更新视频点赞数
 		delta, err := rdb.HGet(context.Background(), "FavoriteCount", strconv.FormatInt(videoId, 10)).Result()
@@ -256,8 +254,9 @@ func UpdateMysql() error {
 			logrus.Error("mysql error in updating favorite_count")
 			return err
 		}
-		return nil
+
 	}
+	return nil
 
 	//count := rdb.BitCount{Start: 0, End: -1}
 	//hashMap, err := rdb.HGetAll(context.Background(), "FavoriteCount").Result()

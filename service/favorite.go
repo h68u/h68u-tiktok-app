@@ -171,17 +171,12 @@ func IsFavorite(userId int64, videoId int64) (bool, error) {
 }
 
 //定时更新redis和mysql,
-func RegularUpdate() error {
-	var mu sync.Mutex
-	go func() {
-		time.Sleep(time.Minute * 5)
-		mu.Lock()
-		defer mu.Unlock()
-		UpdateMysql()
-		DeleteRedis()
-	}()
-	return nil
+func RegularUpdate() {
+	UpdateMysql()
+	DeleteRedis()
+	log.Logger.Info("regular updating!")
 }
+
 func UpdateMysql() error {
 	//更新点赞数
 	all, err := db.Redis.HGetAll(context.Background(),"FavoriteCount").Result()

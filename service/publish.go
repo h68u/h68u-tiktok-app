@@ -34,9 +34,11 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 	// 判断是否为视频
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
+		logrus.Error("copy file error", err)
 		return err
 	}
 	if filetype.IsVideo(buf.Bytes()) == false {
+		logrus.Error("file is not video")
 		return errors.New("not a video")
 	}
 

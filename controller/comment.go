@@ -10,14 +10,16 @@ import (
 )
 
 type CommentActionReq struct {
-	VideoId     int64  `form:"video_id"`
-	ActionId    byte   `form:"action_type" `
-	CommentId   int64  `form:"comment_id" `
-	CommentText string `form:"comment_text" `
+	VideoId     int64  `form:"video_id" binding:"required"`
+	ActionId    byte   `form:"action_type" binding:"required"`
+	CommentId   int64  `form:"comment_id"`
+	CommentText string `form:"comment_text"`
+	Token       string `form:"token" binding:"required"`
 }
 
 type CommentListReq struct {
-	VideoId int64 `form:"video_id"`
+	VideoId int64  `form:"video_id" binding:"required"`
+	Token   string `form:"token" binding:"required"`
 }
 
 var comm srv.Comment
@@ -29,6 +31,11 @@ func CommentAction(c *gin.Context) {
 	userId := userIdI.(int64)
 	var req CommentActionReq
 	err := c.ShouldBindWith(&req, binding.Query)
+	if req.Token == "" {
+		log.Logger.Error("operation illegal")
+		res.Error(c, res.PermissionErrorStatus)
+		return
+	}
 	if err != nil {
 		log.Logger.Error("parse json error")
 		res.Error(c, res.Status{
@@ -38,6 +45,7 @@ func CommentAction(c *gin.Context) {
 		return
 	}
 	if req.ActionId != 1 && req.ActionId != 2 {
+		log.Logger.Error("wrong action type")
 		res.Error(c, res.Status{
 			StatusCode: res.QueryParamErrorStatus.StatusCode,
 			StatusMsg:  res.QueryParamErrorStatus.StatusMsg,
@@ -75,6 +83,7 @@ func CommentAction(c *gin.Context) {
 			}
 			// 权限错误, 不允许删除其他用户评论
 			if err == srv.ErrPermit {
+				log.Logger.Error(err.Error())
 				res.Error(c, res.Status{
 					StatusCode: res.PermissionErrorStatus.StatusCode,
 					StatusMsg:  res.PermissionErrorStatus.StatusMsg,
@@ -94,6 +103,11 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	var req CommentListReq
 	err := c.ShouldBindWith(&req, binding.Query)
+	if req.Token == "" {
+		log.Logger.Error("operation illegal")
+		res.Error(c, res.PermissionErrorStatus)
+		return
+	}
 	if err != nil {
 		log.Logger.Error("parse json error")
 		res.Error(c, res.Status{

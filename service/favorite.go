@@ -97,7 +97,8 @@ func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 		defer m.Unlock()
 		m.Lock()
 		RegularUpdate()
-	}()
+		}()
+
 	logrus.Info("delete redis success")
 	// 获取目标用户发布的视频
 	var videos []model.VideoFavorite

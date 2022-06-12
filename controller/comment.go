@@ -19,7 +19,7 @@ type CommentActionReq struct {
 
 type CommentListReq struct {
 	VideoId int64  `form:"video_id" binding:"required"`
-	Token   string `form:"token" binding:"required"`
+	Token   string `form:"token" `
 }
 
 var comm srv.Comment
@@ -103,11 +103,6 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	var req CommentListReq
 	err := c.ShouldBindWith(&req, binding.Query)
-	if req.Token == "" {
-		log.Logger.Error("operation illegal")
-		res.Error(c, res.PermissionErrorStatus)
-		return
-	}
 	if err != nil {
 		log.Logger.Error("parse json error")
 		res.Error(c, res.Status{

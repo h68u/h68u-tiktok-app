@@ -13,16 +13,14 @@ import (
 func Init() {
 	var m sync.Mutex
 
-
 	// 定时更新 redis
 	go func() {
 		for {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 500)
 			m.Lock()
 			srv.RegularUpdate()
 			m.Unlock()
 		}
 	}()
-	
 
 }

@@ -2,32 +2,15 @@ package srv
 
 import (
 	"context"
-	"fmt"
-	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"strconv"
-	"sync"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
-	"time"
+	"tikapp/util"
 )
 
-/*
-点赞行为：
-	redis:视频点赞数(hash)加1的;在用户id（key)的zset中添加点赞视频id（按照添加时间排序）;添加最近活跃过用户的id的set
-取消赞行为：
-redis:视频点赞数(hash)减1；在用户id（key)的zset中把点赞视频id对应的时间设置为0；添加最近活跃的用户的id的set
-获取点赞列表：
-	（方案1：从redis中获取点赞视频。方案2：还是先更新mysql,再删掉redis）,从mysql中获取点赞视频，按照时间排序的
-更新mysql:
-   更新点赞数：读取redis中视频点赞数（可以为负数），将其与mysql中的Video中的点赞数相加
-   更新点赞列表：对于mysql中没有的点赞列表，根据set和zset按顺序添加。对于应该删除的点赞，根据活跃用户set和score为0的zset对数据库删除
-删除redis:
-	在更新mysql后全部删除，应该两者组成原子操作。
-定时任务：
-	以一个待定时间间隔（5分钟？）执行更新mysql和删除redis操作（应该组成原子操作）
-*/
 type VideoFavorite struct{}
 
 type VideoResp struct {
@@ -53,32 +36,28 @@ type UserResponse struct {
 //点赞操作
 func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	rdb := db.Redis
-	/*
-		//写入[videoID::useID]{create time}
-		_, err := redis.HSet("UserLikeVideo", util.Connect(videoId, userId), time.Now().Unix()).Result()
+	logrus.Info("videoId: ", videoId, " userId: ", userId)
+	latestFlag, err := rdb.HGet(context.Background(), "FavoriteHash", util.Connect(videoId, userId)).Result()
+	if err != nil {
+		//log.Logger.Error("get favorite latestFlag failed", err)
+		//logrus.Error("get favorite latestFlag failed", err)
+		latestFlag = "0"
+	}
+	logrus.Info("latestFlag: ", latestFlag)
+	if latestFlag != "1" {
+		_, err := rdb.HSet(context.Background(), "FavoriteHash", util.Connect(videoId, userId), 1).Result()
 		if err != nil {
-			log.Logger.Error("set like time in redis error")
+			logrus.Error("set hash error: ", err)
 			return err
 		}
-	*/
-
-	//视频点赞数计数
-	err := rdb.HIncrBy(context.Background(),"FavoriteCount", strconv.FormatInt(videoId, 10), 1).Err()
-	if err != nil {
-		log.Logger.Error("add like num in redis error")
-		return err
-	}
-	//添加用户点赞的视频id
-	err = rdb.ZAdd(context.Background(),strconv.FormatInt(userId, 10), &redis.Z{Score: float64(time.Now().Unix()), Member: videoId}).Err()
-	if err != nil {
-		log.Logger.Error("add user favor error")
-		return err
-	}
-	//最近活跃用户集合
-	err = rdb.SAdd(context.Background(),"Users", strconv.FormatInt(userId, 10)).Err()
-	if err != nil {
-		log.Logger.Error("add user error")
-		return err
+		logrus.Info("videoid: ", videoId, " userId: ", userId, " liked success", " latestFlag: ", latestFlag)
+		//视频点赞数计数
+		err = rdb.HIncrBy(context.Background(), "FavoriteCount", strconv.FormatInt(videoId, 10), 1).Err()
+		if err != nil {
+			log.Logger.Error("add like num in redis error")
+			return err
+		}
+		logrus.Info("increase like num success")
 	}
 	return nil
 }
@@ -86,58 +65,104 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 //取消赞
 func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 	rdb := db.Redis
-	/*
-		err := rdb.HSet("UserLikeVideo",util.Connect(videoId,userId), "0").Err()
-		if err !=nil{
-			log.Logger.Error("remove like in redis error")
+	latestFlag, err := rdb.HGet(context.Background(), "FavoriteHash", util.Connect(videoId, userId)).Result()
+	if err != nil {
+		log.Logger.Error("get favorite latestFlag failed")
+		latestFlag = "1"
+	}
+	logrus.Info("latestFlag: ", latestFlag)
+	if latestFlag != "0" {
+		_, err := rdb.HSet(context.Background(), "FavoriteHash", util.Connect(videoId, userId), 0).Result()
+		if err != nil {
+			logrus.Error("set hash error: ", err)
 			return err
 		}
-	*/
-	err := rdb.HIncrBy(context.Background(),"FavoriteCount", strconv.FormatInt(videoId, 10), -1).Err()
-	if err != nil {
-		log.Logger.Error("redis error in set like num")
-		return err
-	}
-
-	err = rdb.ZAdd(context.Background(),strconv.FormatInt(userId, 10), &redis.Z{Score: float64(0), Member: videoId}).Err()
-	if err != nil {
-		log.Logger.Error("redis error in list")
-		return err
-	}
-	err = rdb.SAdd(context.Background(),"Users", strconv.FormatInt(userId, 10)).Err()
-	if err != nil {
-		log.Logger.Error("add user  error")
-		return err
+		logrus.Info("videoid: ", videoId, " userId: ", userId, " unliked success")
+		//视频点赞数计数
+		err = rdb.HIncrBy(context.Background(), "FavoriteCount", strconv.FormatInt(videoId, 10), -1).Err()
+		if err != nil {
+			log.Logger.Error("decrease like num in redis error")
+			return err
+		}
+		logrus.Info("decrease like num success")
 	}
 	return nil
 }
 
 //获取点赞列表
-func (favorite *VideoFavorite) FavorList(userId int64) (interface{}, error) {
-	var favors []model.VideoFavorite
-	//更新数据库，删除redis
-	var mu sync.Mutex
-	mu.Lock()
-	UpdateMysql()
-	DeleteRedis()
-	mu.Unlock()
-	result := db.MySQL.Debug().Where("user_id = ?", userId).Preload("User", "Video").Order("CreateTime desc").Find(&favors)
-	fmt.Println(result)
-	resp := UpdateListResp(favors)
-	return resp, nil
+func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
+	logrus.Info("starting favorites...")
+	err := UpdateMysql()
+	if err != nil {
+		logrus.Error("update favorite failed", err)
+		return nil, err
+	}
+	// 获取目标用户发布的视频
+	var videos []model.VideoFavorite
 
+	var res []VideoResp
+	err = db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Find(&videos).Error
+	if err != nil {
+		logrus.Error("mysql happen error when find video in table", err)
+		return nil, err
+	}
+	logrus.Info("videos", videos)
+	for _, video := range videos {
+		var videoInTable model.Video
+		//将表中的信息填到videos中，并补充其他信息
+		logrus.Info("videoid: ", video.VideoId)
+		err := db.MySQL.Model(&model.Video{}).Where("id = ?", video.VideoId).First(&videoInTable).Error
+		if err != nil {
+			logrus.Error("mysql happen error when find video in table: ", err)
+			return nil, err
+		}
+		logrus.Info("videoInTable", videoInTable)
+		tempvideo := VideoResp{
+			Id:            videoInTable.Id,
+			PlayUrl:       videoInTable.PlayUrl,
+			CoverUrl:      videoInTable.CoverUrl,
+			FavoriteCount: videoInTable.FavoriteCount,
+			CommentCount:  videoInTable.CommentCount,
+			Title:         videoInTable.Title,
+		}
+		tempfavorite, _ := IsFavorite(userId, video.UserId)
+		tempvideo.IsFavorite = tempfavorite
+		//获取作者信息
+		var tempuser model.User
+		err = db.MySQL.Model(&model.User{}).Where("id = ?", userId).First(&tempuser).Error
+		userRes := UserResponse{
+			Id:            tempuser.Id,
+			Name:          tempuser.Name,
+			FollowCount:   tempuser.FollowCount,
+			FollowerCount: tempuser.FollowerCount,
+			IsFollow:      isFollowed(userId, tempuser.Id),
+		}
+		tempvideo.Author = userRes
+		if err != nil {
+			logrus.Error("mysql happen error when query user info")
+			return nil, err
+		}
+		res = append(res, tempvideo)
+	}
+	err = DeleteRedis()
+	if err != nil {
+		logrus.Error("delete redis error: ", err)
+		return nil, err
+	}
+	logrus.Info("delete redis success")
+	return res, nil
 }
-
 func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 	resp := make([]VideoResp, 0, len(favors))
 	for _, favor := range favors {
+		logrus.Info("favor: ", favor)
 		isfavor, _ := IsFavorite(favor.UserId, favor.VideoId)
 		userResponse := UserResponse{
 			Id:            favor.UserId,
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id),
+			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), //未完成是否关注
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,
@@ -154,7 +179,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 	return resp
 }
 
-//判断是否点赞
+// IsFavorite 判断是否点赞
 func IsFavorite(userId int64, videoId int64) (bool, error) {
 	// rdb := db.Redis
 	log.Logger.Error("isfavorite can not be known ")
@@ -178,71 +203,119 @@ func RegularUpdate() {
 }
 
 func UpdateMysql() error {
-	//更新点赞数
-	all, err := db.Redis.HGetAll(context.Background(),"FavoriteCount").Result()
+	logrus.Info("Update starting1...")
+	// 更新
+	rdb := db.Redis
+	// update mysql
+	pairs, err := rdb.HGetAll(context.Background(), "FavoriteHash").Result()
 	if err != nil {
-		log.Logger.Error("get all param in redis error")
+		logrus.Error("get pairs failed", err)
 		return err
 	}
-	for videoId, count := range all {
-		if err := db.MySQL.Begin().Debug().Model(&model.Video{}).
-			Where("id = ?", videoId).
-			Update("favorite_count", gorm.Expr("favorite_count + ?", count)).Error; err != nil {
-			db.MySQL.Begin().Rollback()
-			log.Logger.Error("mysql error in updating favorite_count")
-			return err
-		}
-	}
-	//更新点赞列表
-	users, err := db.Redis.SMembers(context.Background(), "Users").Result()
-	if err != nil {
-		log.Logger.Error("get all param in redis error")
-		return err
-	}
-	var favors model.VideoFavorite
+	logrus.Info("pairs", pairs)
 
-	for _, userId := range users {
-		videoIds, err := db.Redis.ZRange(context.Background(),userId, 0, -1).Result()
-		if err != nil {
-			log.Logger.Error("get videoId in redis error")
-			return err
-		}
-		for _, videoId := range videoIds {
-			time, err := db.Redis.ZScore(context.Background(), userId, videoId).Result()
+	for pair, flag := range pairs {
+		logrus.Info("Update starting3...")
+		videoId, userId := util.Separate(pair)
+		logrus.Info("Update starting4...")
+		var favors model.VideoFavorite
+		favors.UserId = userId
+		favors.VideoId = videoId
+		logrus.Info(userId, videoId, flag)
+		if flag == "1" {
+			// TODO: 删除操作
+			// 更新点赞表
+			// 先删除，再添加
+			err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Delete(&model.VideoFavorite{}).Error
 			if err != nil {
-				log.Logger.Error("get time in redis error")
+				logrus.Error("update video favorite_count failed", err)
 				return err
 			}
-			if time == 0 {
-				videoId, _ := strconv.ParseInt(videoId, 10, 64)
-				userId, _ := strconv.ParseInt(userId, 10, 64)
-				favors = model.VideoFavorite{
-					UserId:  userId,
-					VideoId: videoId,
-				}
-				if err := db.MySQL.Begin().Debug().Delete(&favors).Error; err != nil {
-					log.Logger.Error("mysql error in doing remove action")
-					return err
-				}
+			if err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Create(&favors).Error; err != nil {
+				logrus.Error("mysql error in creating video favorite")
 			}
-			db.MySQL.Debug().
-				Model(&model.VideoFavorite{}).
-				Where("video_id = ? and user_id = ?", videoId, userId).
-				First(&favors)
-			if favors.CreateTime == 0 && time != 0 {
-				videoId, _ := strconv.ParseInt(videoId, 10, 64)
-				userId, _ := strconv.ParseInt(userId, 10, 64)
-				favors = model.VideoFavorite{
-					UserId:  userId,
-					VideoId: videoId,
-				}
-				if err := db.MySQL.Begin().Debug().Create(&favors).Error; err != nil {
-					log.Logger.Error("mysql error in doing favor action")
-					return err
-				}
+			logrus.Info("update video_favorite success")
+		} else if flag == "0" {
+			if err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Delete(&model.VideoFavorite{}).Error; err != nil {
+				logrus.Error("mysql error in deleting video favorite")
 			}
 		}
+		// 更新视频点赞数
+		delta, err := rdb.HGet(context.Background(), "FavoriteCount", strconv.FormatInt(videoId, 10)).Result()
+		if err != nil {
+			logrus.Error("get delta failed", err)
+		}
+		logrus.Info("delta: ", delta)
+		if err := db.MySQL.Debug().Model(&model.Video{}).
+			Where("id = ?", videoId).
+			Update("favorite_count", gorm.Expr("favorite_count + ?", delta)).Error; err != nil {
+			logrus.Error("mysql error in updating favorite_count")
+			return err
+		}
+
 	}
+	return nil
+
+	//count := rdb.BitCount{Start: 0, End: -1}
+	//hashMap, err := rdb.HGetAll(context.Background(), "FavoriteCount").Result()
+	//logrus.Info("hashMap:", hashMap)
+	//if err != nil {
+	//	log.Logger.Error("get all param in redis error")
+	//	return err
+	//}
+	//for videoId, count := range hashMap {
+	//	logrus.Info("videoId:", videoId, " count:", count)
+	//	if err := db.MySQL.Debug().Model(&model.Video{}).
+	//		Where("id = ?", videoId).
+	//		Update("favorite_count", gorm.Expr("favorite_count + ?", count)).Error; err != nil {
+	//		//db.MySQL.Begin().Rollback()
+	//		logrus.Error("mysql error in updating favorite_count")
+	//		return err
+	//	}
+	//}
+	////更新点赞列表
+	//users, err := db.Redis.SMembers(context.Background(), "Users").Result()
+	//logrus.Info("users: ", users)
+	//if err != nil {
+	//	log.Logger.Error("get all param in redis error")
+	//	return err
+	//}
+	//var favors model.VideoFavorite
+	//
+	//for _, userId := range users {
+	//	videoIds, err := db.Redis.ZRange(context.Background(), userId, 0, -1).Result()
+	//	if err != nil {
+	//		logrus.Error("get videoId in redis error")
+	//		return err
+	//	}
+	//	for _, videoId := range videoIds {
+	//		videoId, _ := strconv.ParseInt(videoId, 10, 64)
+	//		userId, _ := strconv.ParseInt(userId, 10, 64)
+	//		favors.UserId = userId
+	//		favors.VideoId = videoId
+	//		if err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Create(&favors).Error; err != nil {
+	//			logrus.Error("mysql error in creating video favorite")
+	//		}
+	//
+	//		//db.MySQL.Debug().
+	//		//	Model(&model.VideoFavorite{}).
+	//		//	Where("video_id = ? and user_id = ?", videoId, userId).
+	//		//	First(&favors)
+	//		//if favors.CreateTime == 0 {
+	//		//	videoId, _ := strconv.ParseInt(videoId, 10, 64)
+	//		//	userId, _ := strconv.ParseInt(userId, 10, 64)
+	//		//	favors = model.VideoFavorite{
+	//		//		UserId:  userId,
+	//		//		VideoId: videoId,
+	//		//	}
+	//		//	logrus.Info("favors: ", favors)
+	//		//	if err := db.MySQL.Debug().Create(&favors).Error; err != nil {
+	//		//		log.Logger.Error("mysql error in doing follow action")
+	//		//		return err
+	//		//	}
+	//		//}
+	//	}
+	//}
 	return nil
 }
 func DeleteRedis() error {
@@ -252,22 +325,24 @@ func DeleteRedis() error {
 		log.Logger.Error("delete redis error")
 		return err
 	}
-	users, err := db.Redis.SMembers(context.Background(), "Users").Result()
-	if err != nil {
-		log.Logger.Error("get all param in redis error")
-		return err
-	}
-	for _, userId := range users {
-		err = db.Redis.Del(context.Background(), userId).Err()
-		if err != nil {
-			log.Logger.Error("delete redis error")
-			return err
-		}
-	}
-	err = db.Redis.Del(context.Background(),"Users").Err()
+	log.Logger.Info("delete redis count success")
+	//users, err := db.Redis.SMembers(context.Background(), "Users").Result()
+	//if err != nil {
+	//	log.Logger.Error("get all param in redis error")
+	//	return err
+	//}
+	//for _, userId := range users {
+	//	err = db.Redis.Del(context.Background(), userId).Err()
+	//	if err != nil {
+	//		log.Logger.Error("delete redis error")
+	//		return err
+	//	}
+	//}
+	err = db.Redis.Del(context.Background(), "FavoriteHash").Err()
 	if err != nil {
 		log.Logger.Error("delete redis error")
 		return err
 	}
+	log.Logger.Info("delete redis hash success")
 	return nil
 }

@@ -32,7 +32,6 @@ type UserResponse struct {
 	IsFollow      bool   `json:"is_follow"`
 }
 
-//后续设置context？需要加并行?
 //点赞操作
 func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	rdb := db.Redis
@@ -162,7 +161,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), //未完成是否关注
+			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), 
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,
@@ -223,7 +222,6 @@ func UpdateMysql() error {
 		favors.VideoId = videoId
 		logrus.Info(userId, videoId, flag)
 		if flag == "1" {
-			// TODO: 删除操作
 			// 更新点赞表
 			// 先删除，再添加
 			err = db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Delete(&model.VideoFavorite{}).Error

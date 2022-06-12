@@ -94,15 +94,10 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	logrus.Info("starting favorites...")
 	var m sync.Mutex
-	go func() {
-		for {
-			func() {
-				defer m.Unlock()
-				m.Lock()
-				RegularUpdate()
-
-			}()
-		}
+	func() {
+		defer m.Unlock()
+		m.Lock()
+		RegularUpdate()
 	}()
 	logrus.Info("delete redis success")
 	// 获取目标用户发布的视频

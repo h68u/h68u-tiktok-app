@@ -58,7 +58,7 @@ func FavoriteAction(c *gin.Context){
 			})
 			return 
 		}
-	case 0:
+	case 2:
 		//取消赞
 		err = favorite.RemoveFavor(req.VideoId,userId.(int64))
 		if err != nil{

@@ -100,7 +100,7 @@ func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	var videos []model.VideoFavorite
 
 	var res []VideoResp
-	err = db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Find(&videos).Error
+	err = db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Order("create_time desc").Find(&videos).Error
 	if err != nil {
 		logrus.Error("mysql happen error when find video in table", err)
 		return nil, err

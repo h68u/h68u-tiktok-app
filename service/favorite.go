@@ -10,7 +10,6 @@ import (
 	"tikapp/common/model"
 	"tikapp/util"
 	"sync"
-	"time"
 )
 
 type VideoFavorite struct{}

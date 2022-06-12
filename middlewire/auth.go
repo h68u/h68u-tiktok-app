@@ -28,7 +28,6 @@ import (
 //
 // 3.acc和ref同时更新，只有在30天没有没有登录时提醒重新登陆
 //
-// TODO 目前redis更新时可能并发不安全（能力不够，不知道怎么解决）
 
 type BackendLoginReq struct {
 }

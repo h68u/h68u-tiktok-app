@@ -316,7 +316,6 @@ func UpdateMysql() error {
 	//		//}
 	//	}
 	//}
-	return nil
 }
 func DeleteRedis() error {
 	//视频点赞计数可以直接删除

@@ -15,6 +15,7 @@ func Init() {
 
 	// 定时更新 redis
 	go func() {
+		var m sync.Mutex
 		for {
 			func() {
 				defer m.Unlock()

@@ -2,6 +2,7 @@ package srv
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"tikapp/common/db"
 	"tikapp/common/model"
 	"time"
@@ -17,7 +18,6 @@ type CommentResp struct {
 	CreateDate string   `json:"create_date"`
 	User       UserResp `json:"user"`
 }
-
 type UserResp struct {
 	Id            int64  `json:"id"`
 	Name          string `json:"name"`
@@ -34,11 +34,22 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		Content:    commentText,
 		CreateTime: time.Now().Unix(),
 	}
+	video := model.Video{
+		Id: videoId,
+	}
 	user, err := getUserByUserId(userId)
 	if err != nil {
 		return CommentResp{}, err
 	}
+
+	// 开启事务
 	tx := db.MySQL.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	// 创建评论
 	if err = tx.Debug().
 		Model(&model.Comment{}).
 		Create(&comment).
@@ -46,14 +57,26 @@ func (comm *Comment) Publish(userId int64, videoId int64, commentText string) (C
 		tx.Rollback()
 		return CommentResp{}, err
 	}
-	tx.Commit()
-	return genCommentResp(comment, user), nil
+	// 评论数增加
+	if err = tx.Debug().
+		Model(&video).
+		UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).
+		Error; err != nil {
+		tx.Rollback()
+		return CommentResp{}, err
+	}
+	// 提交事务
+	err = tx.Commit().Error
+	return genCommentResp(comment, user), err
 }
 
 // Delete 删除评论
 func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (CommentResp, error) {
 	// 从数据库中找到要删除的评论
 	var comment model.Comment
+	video := model.Video{
+		Id: videoId,
+	}
 	if err := db.MySQL.Debug().
 		Model(&model.Comment{}).
 		First(&comment, commentId).
@@ -69,15 +92,32 @@ func (comm *Comment) Delete(userId int64, videoId int64, commentId int64) (Comme
 	if err != nil {
 		return CommentResp{}, err
 	}
+
+	// 开启事务
 	tx := db.MySQL.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	// 删除评论
 	if err = tx.Debug().
 		Delete(&model.Comment{}, commentId).
 		Error; err != nil {
 		tx.Rollback()
 		return CommentResp{}, err
 	}
-	tx.Commit()
-	return genCommentResp(comment, publisher), nil
+	// 评论数减少
+	if err := tx.Debug().
+		Model(&video).
+		UpdateColumn("comment_count", gorm.Expr("comment_count - ?", 1)).
+		Error; err != nil {
+		tx.Rollback()
+		return CommentResp{}, err
+	}
+	// 提交事务
+	err = tx.Commit().Error
+	return genCommentResp(comment, publisher), err
 }
 
 func (comm *Comment) List(videoId int64) ([]CommentResp, error) {

@@ -1,8 +1,11 @@
 package srv
 
 import (
+	"bytes"
 	"errors"
+	"github.com/h2non/filetype"
 	"github.com/sirupsen/logrus"
+	"io"
 	"mime/multipart"
 	"tikapp/common/db"
 	"tikapp/common/log"
@@ -28,18 +31,23 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 		}
 	}(file)
 	// 判断是否为视频
-	//buf := bytes.NewBuffer(nil)
-	//if _, err := io.Copy(buf, file); err != nil {
-	//	logrus.Error("copy file error", err)
-	//	return err
-	//}
-	//if filetype.IsVideo(buf.Bytes()) == false {
-	//	logrus.Error("file is not video")
-	//	return errors.New("not a video")
-	//}
+	checkFile, err := data.Open()
+	if err != nil {
+		return err
+	}
 
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, checkFile); err != nil {
+		logrus.Error("copy file error", err)
+		return err
+	}
+	if filetype.IsVideo(buf.Bytes()) == false {
+		logrus.Error("file is not video")
+		return errors.New("not a video")
+	}
+	checkFile.Close()
 	// 存储到oss
-	log.Logger.Info("start to upload video to oss")
+	log.Logger.Info("start to upload video to oss, file type: ")
 	ok, err := oss.UploadVideoToOss(BucketName, data.Filename, file)
 	if err != nil {
 		return err
@@ -62,10 +70,12 @@ func (v Video) PublishAction(data *multipart.FileHeader, title string, publishId
 		Title:         title,
 		CreateTime:    time.Now().Unix(),
 	}
+	logrus.Info("play_url: ", videoUrl)
 	err = db.MySQL.Model(&model.Video{}).Create(&video).Error
 	if err != nil {
 		return err
 	}
+	logrus.Info("inset video to mysql success")
 	return nil
 }
 

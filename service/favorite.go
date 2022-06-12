@@ -39,8 +39,9 @@ func (favorite *VideoFavorite) FavorAction(videoId int64, userId int64) error {
 	logrus.Info("videoId: ", videoId, " userId: ", userId)
 	latestFlag, err := rdb.HGet(context.Background(), "FavoriteHash", util.Connect(videoId, userId)).Result()
 	if err != nil {
-		log.Logger.Error("get favorite latestFlag failed")
-		return err
+		//log.Logger.Error("get favorite latestFlag failed", err)
+		//logrus.Error("get favorite latestFlag failed", err)
+		latestFlag = "0"
 	}
 	logrus.Info("latestFlag: ", latestFlag)
 	if latestFlag != "1" {
@@ -67,7 +68,7 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 	latestFlag, err := rdb.HGet(context.Background(), "FavoriteHash", util.Connect(videoId, userId)).Result()
 	if err != nil {
 		log.Logger.Error("get favorite latestFlag failed")
-		return err
+		latestFlag = "1"
 	}
 	logrus.Info("latestFlag: ", latestFlag)
 	if latestFlag != "0" {
@@ -143,7 +144,12 @@ func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 		}
 		res = append(res, tempvideo)
 	}
-
+	err = DeleteRedis()
+	if err != nil {
+		logrus.Error("delete redis error: ", err)
+		return nil, err
+	}
+	logrus.Info("delete redis success")
 	return res, nil
 }
 func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
@@ -319,6 +325,7 @@ func DeleteRedis() error {
 		log.Logger.Error("delete redis error")
 		return err
 	}
+	log.Logger.Info("delete redis count success")
 	//users, err := db.Redis.SMembers(context.Background(), "Users").Result()
 	//if err != nil {
 	//	log.Logger.Error("get all param in redis error")
@@ -331,10 +338,11 @@ func DeleteRedis() error {
 	//		return err
 	//	}
 	//}
-	err = db.Redis.Del(context.Background(), "VideoFavorite").Err()
+	err = db.Redis.Del(context.Background(), "FavoriteHash").Err()
 	if err != nil {
 		log.Logger.Error("delete redis error")
 		return err
 	}
+	log.Logger.Info("delete redis hash success")
 	return nil
 }

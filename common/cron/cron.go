@@ -11,10 +11,11 @@ import (
 )
 
 func Init() {
-	var m sync.Mutex
+	
 
 	// 定时更新 redis
 	go func() {
+		var m sync.Mutex
 		for {
 			func() {
 				defer m.Unlock()

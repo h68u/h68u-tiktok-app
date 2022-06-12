@@ -9,6 +9,7 @@ import (
 	"tikapp/common/log"
 	"tikapp/common/model"
 	"tikapp/util"
+	"sync"
 )
 
 type VideoFavorite struct{}
@@ -91,16 +92,19 @@ func (favorite *VideoFavorite) RemoveFavor(videoId int64, userId int64) error {
 //获取点赞列表
 func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 	logrus.Info("starting favorites...")
-	err := UpdateMysql()
-	if err != nil {
-		logrus.Error("update favorite failed", err)
-		return nil, err
-	}
+	var m sync.Mutex
+	func() {
+		defer m.Unlock()
+		m.Lock()
+		RegularUpdate()
+		}()
+
+	logrus.Info("delete redis success")
 	// 获取目标用户发布的视频
 	var videos []model.VideoFavorite
 
 	var res []VideoResp
-	err = db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Order("create_time desc").Find(&videos).Error
+	err := db.MySQL.Model(&model.VideoFavorite{}).Where("user_id = ?", userId).Order("create_time desc").Find(&videos).Error
 	if err != nil {
 		logrus.Error("mysql happen error when find video in table", err)
 		return nil, err
@@ -116,6 +120,7 @@ func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 			return nil, err
 		}
 		logrus.Info("videoInTable", videoInTable)
+		
 		tempvideo := VideoResp{
 			Id:            videoInTable.Id,
 			PlayUrl:       videoInTable.PlayUrl,
@@ -143,12 +148,6 @@ func (v *VideoFavorite) FavorList(userId int64) (interface{}, error) {
 		}
 		res = append(res, tempvideo)
 	}
-	err = DeleteRedis()
-	if err != nil {
-		logrus.Error("delete redis error: ", err)
-		return nil, err
-	}
-	logrus.Info("delete redis success")
 	return res, nil
 }
 func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
@@ -156,6 +155,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 	for _, favor := range favors {
 		logrus.Info("favor: ", favor)
 		isfavor, _ := IsFavorite(favor.UserId, favor.VideoId)
+
 		userResponse := UserResponse{
 			Id:            favor.UserId,
 			Name:          favor.User.Name,

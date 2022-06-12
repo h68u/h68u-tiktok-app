@@ -19,14 +19,6 @@ func RedisInit() {
 		logrus.Panic("connect redis failed: %v", err)
 	}
 	logrus.Info("Connect redis succeeded")
-
-	// 防止 client 挂掉 应该有更优雅的方法，现在这样勉强能用 (大概)
-	// go func() {
-	// 	for {
-	// 		time.Sleep(time.Minute * 90)
-	// 		Redis.Ping()
-	// 	}
-	// }()
 }
 
 //更新redis

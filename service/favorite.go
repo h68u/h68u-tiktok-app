@@ -5,12 +5,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"strconv"
-	"sync"
 	"tikapp/common/db"
 	"tikapp/common/log"
 	"tikapp/common/model"
 	"tikapp/util"
-	"time"
 )
 
 type VideoFavorite struct{}
@@ -191,19 +189,13 @@ func IsFavorite(userId int64, videoId int64) (bool, error) {
 	return false, nil
 }
 
-// RegularUpdate 定时更新redis和mysql,
-func RegularUpdate() error {
-	var mu sync.Mutex
-	go func() {
-		time.Sleep(time.Minute * 10)
-		mu.Lock()
-		defer mu.Unlock()
-		logrus.Info("update mysql and redis")
-		UpdateMysql()
-		DeleteRedis()
-	}()
-	return nil
+//定时更新redis和mysql,
+func RegularUpdate() {
+	UpdateMysql()
+	DeleteRedis()
+	log.Logger.Info("regular updating!")
 }
+
 func UpdateMysql() error {
 	logrus.Info("Update starting1...")
 	// 更新
@@ -327,19 +319,19 @@ func DeleteRedis() error {
 		log.Logger.Error("delete redis error")
 		return err
 	}
-	users, err := db.Redis.SMembers(context.Background(), "Users").Result()
-	if err != nil {
-		log.Logger.Error("get all param in redis error")
-		return err
-	}
-	for _, userId := range users {
-		err = db.Redis.Del(context.Background(), userId).Err()
-		if err != nil {
-			log.Logger.Error("delete redis error")
-			return err
-		}
-	}
-	err = db.Redis.Del(context.Background(), "Users").Err()
+	//users, err := db.Redis.SMembers(context.Background(), "Users").Result()
+	//if err != nil {
+	//	log.Logger.Error("get all param in redis error")
+	//	return err
+	//}
+	//for _, userId := range users {
+	//	err = db.Redis.Del(context.Background(), userId).Err()
+	//	if err != nil {
+	//		log.Logger.Error("delete redis error")
+	//		return err
+	//	}
+	//}
+	err = db.Redis.Del(context.Background(), "VideoFavorite").Err()
 	if err != nil {
 		log.Logger.Error("delete redis error")
 		return err

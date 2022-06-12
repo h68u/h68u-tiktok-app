@@ -161,7 +161,7 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 			Name:          favor.User.Name,
 			FollowCount:   favor.User.FollowCount,
 			FollowerCount: favor.User.FollowerCount,
-			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id), 
+			IsFollow:      isFollowed(favor.User.Id, favor.Video.User.Id),
 		}
 		videoResp := VideoResp{
 			Id:            favor.VideoId,
@@ -181,7 +181,6 @@ func UpdateListResp(favors []model.VideoFavorite) []VideoResp {
 // IsFavorite 判断是否点赞
 func IsFavorite(userId int64, videoId int64) (bool, error) {
 	// rdb := db.Redis
-	log.Logger.Error("isfavorite can not be known ")
 	var count int64
 	err := db.MySQL.Debug().Model(&model.VideoFavorite{}).Where("user_id = ? and video_id = ?", userId, videoId).Count(&count).Error
 	if err != nil {

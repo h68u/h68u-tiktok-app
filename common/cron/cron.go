@@ -16,7 +16,7 @@ func Init() {
 	// 定时更新 redis
 	go func() {
 		for {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Minute * 5)
 			m.Lock()
 			srv.RegularUpdate()
 			m.Unlock()

@@ -37,3 +37,6 @@
 
 ## 项目汇报文档(ppt)地址
 [飞书文档](https://s97bh2semh.feishu.cn/file/boxcnHOxH4scTc8A2ODugoiW6ib)
+
+## 项目核心点介绍
+[青训营笔记](https://juejin.cn/post/7108371999004557319)

@@ -36,4 +36,4 @@
 - app.example.yaml 项目配置文件示例
 
 ## 项目汇报文档(ppt)地址
-[飞书文档](https://s97bh2semh.feishu.cn/docx/doxcnCv8NUZvMrQlvZ2L5juxz3f)
+[飞书文档](https://s97bh2semh.feishu.cn/file/boxcnHOxH4scTc8A2ODugoiW6ib)
